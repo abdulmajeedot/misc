@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PumpBOM Glide</title>
+<!--
+  PumpBOM – simple prototype on Glide Data Grid (canvas grid, handles 100k+ rows smoothly).
+  Loads React + Glide from CDN. For an offline office server, bundle with Vite instead (see notes in chat).
+  Data comes from bom-data.js (MAT, PRODUCTS, PLANS, SEC, SECORD, TODAY).
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glideapps/glide-data-grid@6.0.3/dist/index.css">
+<script type="importmap">
+{ "imports": {
+  "react": "https://esm.sh/react@18.3.1",
+  "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+  "react-dom": "https://esm.sh/react-dom@18.3.1?external=react",
+  "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?external=react",
+  "@glideapps/glide-data-grid": "https://esm.sh/@glideapps/glide-data-grid@6.0.3?external=react,react-dom"
+} }
+</script>
+<style>
+:root{--g:#217346;--gd:#185c37;--gl:#e9f3ee;--line:#dadada;--mut:#666;font-family:"Segoe UI",Calibri,system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#fff;color:#1f1f1f;font-size:13px}
+button,select,input{font:inherit;color:inherit}
+#root{height:100vh}
+.app{display:flex;flex-direction:column;height:100%}
+.top{display:flex;align-items:center;gap:16px;background:var(--g);color:#fff;padding:0 12px;height:40px;flex:none}
+.logo{width:24px;height:24px;border-radius:3px;background:#fff;color:var(--g);font-weight:700;display:grid;place-items:center;font-size:11px}
+.tabs{display:flex;gap:2px;height:100%;align-items:flex-end}
+.tab{padding:7px 14px;cursor:pointer;border-radius:3px 3px 0 0;color:#e6f2ea;border:0;background:transparent}
+.tab.on{background:#fff;color:var(--g);font-weight:600}
+.sp{flex:1}
+.top select{background:#fff;color:#222;border:0;border-radius:3px;padding:3px 6px}
+.main{flex:1;display:flex;min-height:0}
+.side{width:270px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#fbfbfb}
+.side input{margin:10px;padding:6px 8px;border:1px solid #bdbdbd;border-radius:3px}
+.side input:focus{outline:2px solid var(--g);outline-offset:-1px}
+.plist{overflow:auto;flex:1}
+.pi{padding:8px 12px;border-left:3px solid transparent;border-bottom:1px solid #eee;cursor:pointer}
+.pi:hover{background:#f0f0f0}
+.pi.on{background:var(--gl);border-left-color:var(--g)}
+.pi b{font-family:Consolas,monospace;font-size:12px}
+.pi div{color:#333;margin-top:2px}
+.pi small{color:var(--mut)}
+.work{flex:1;display:flex;flex-direction:column;min-width:0}
+.strip{display:flex;gap:20px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;flex:none}
+.strip h2{margin:0;font-size:16px;font-weight:600}
+.strip.head{padding:8px 14px;gap:12px;flex-wrap:nowrap;align-items:center}
+.head .info{flex:1;min-width:0}
+.head .l1{display:flex;align-items:baseline;gap:8px}
+.head h2{font-size:15px;font-weight:600}
+.head .vendor{font-weight:400;color:var(--mut)}
+.head .ver{color:var(--mut);font-size:11px;border:1px solid #e0e0e0;border-radius:9px;padding:0 7px}
+.head .l2{display:flex;gap:14px;flex-wrap:wrap;margin-top:3px;font-size:12px;color:var(--mut)}
+.spec b{font-weight:500;color:var(--sc)}
+.head .acts{display:flex;gap:2px;flex:none}
+.head .acts button{border:0;background:transparent;color:var(--mut);font-size:12px;padding:3px 8px;border-radius:3px;cursor:pointer}
+.head .acts button:hover{background:#f0f0f0;color:#222}
+.pi .pl1{display:flex;align-items:baseline;gap:8px;margin:0}
+.pi .pv{margin-left:auto;font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .sub{color:var(--mut);font-size:12px;margin-top:2px}
+.kpi{border-left:1px solid var(--line);padding-left:14px}
+.kpi .k{font-size:11px;color:var(--mut)}
+.kpi .v{font-size:16px;font-weight:600}
+.bad{color:#9c0006}.good{color:#006100}
+.bar{display:flex;width:240px;height:12px;border-radius:2px;overflow:hidden}
+.lg{font-size:11px;color:#444;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+.lg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:3px}
+.tools{display:flex;gap:6px;align-items:center;padding:6px 14px;border-bottom:1px solid var(--line);background:#f8f8f8;flex:none;flex-wrap:wrap}
+.tools button{border:1px solid #cfcfcf;background:#fff;border-radius:3px;padding:3px 10px;cursor:pointer}
+.tools button:hover{background:#eee}
+.tools .hint{color:var(--mut);font-size:12px;margin-left:8px}
+.gridbox{flex:1;min-height:0;position:relative}
+.gridbox>div{position:absolute!important;inset:0}
+.planbox{flex:none;border-bottom:1px solid var(--line)}
+.status{display:flex;gap:22px;background:var(--g);color:#fff;font-size:12px;height:24px;align-items:center;padding:0 12px;flex:none}
+.status b{font-weight:600}
+.loading{padding:40px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div id="root"><div class="loading">Loading grid… (needs internet for the CDN in this prototype)</div></div>
+<div id="portal" style="position:fixed;left:0;top:0;z-index:9999"></div>
+
+<script src="bom-data.js"></script>
+<script type="module">
+import React, {useState, useMemo, useCallback, useEffect} from 'react';
+import {createRoot} from 'react-dom/client';
+import {DataEditor, GridCellKind} from '@glideapps/glide-data-grid';
+const h = React.createElement;
+
+/* ---------- helpers ---------- */
+const fmt = (v,d=0) => v==null || v==='' ? '' : Number(v).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const bomCost = p => p.bom.reduce((a,[c,q])=>a+q*MAT[c].rate,0);
+const monthName = k => new Date(k+'-01').toLocaleString('en-IN',{month:'long',year:'numeric'});
+const RED = {bgCell:'#ffc7ce', textDark:'#9c0006'}, AMBER = {bgCell:'#ffeb9c', textDark:'#9c5700'}, GREEN = {bgCell:'#c6efce', textDark:'#006100'};
+const INPUT = {bgCell:'#fff1e0', textDark:'#3f3f76'};
+
+const theme = {
+  accentColor:'#217346', accentLight:'rgba(33,115,70,0.14)', accentFg:'#fff',
+  textDark:'#1f1f1f', textMedium:'#555', textLight:'#888', textHeader:'#1d3b2a', textGroupHeader:'#1d3b2a',
+  bgCell:'#ffffff', bgCellMedium:'#f7f7f7', bgHeader:'#e8efe9', bgHeaderHasFocus:'#d3e8dc', bgHeaderHovered:'#dcebe1',
+  borderColor:'#dadada', horizontalBorderColor:'#e2e2e2', drilldownBorder:'#dadada',
+  headerFontStyle:'600 12px', baseFontStyle:'13px', fontFamily:'"Segoe UI", Calibri, system-ui, sans-serif',
+  cellHorizontalPadding:8, cellVerticalPadding:3,
+};
+
+const txt = (s, o={}) => ({kind:GridCellKind.Text, data:String(s??''), displayData:String(s??''), allowOverlay:false, readonly:true, ...o});
+const num = (v, d=0, o={}) => ({kind:GridCellKind.Number, data:v, displayData:fmt(v,d), allowOverlay:false, readonly:true, contentAlign:'right', ...o});
+const edit = (v, d=0) => num(v, d, {allowOverlay:true, readonly:false, themeOverride:INPUT});
+
+/* Group items by side (Motor / Pump / Panel / Packing) into flat rows: g = group header, d = item, t = total */
+function groupRows(items, collapsed, sort, sumKeys){
+  const rows = [];
+  const sorter = sort ? (a,b)=>{ const x=a[sort.k], y=b[sort.k]; return (typeof x==='number' ? x-y : String(x).localeCompare(String(y))) * sort.dir; } : null;
+  SECORD.forEach(sec=>{
+    let list = items.filter(i=>i.sec===sec); if(!list.length) return;
+    if(sorter) list = [...list].sort(sorter);
+    const sums = {}; sumKeys.forEach(k=>sums[k]=list.reduce((a,b)=>a+(+b[k]||0),0));
+    rows.push({t:'g', sec, count:list.length, sums});
+    if(!collapsed.has(sec)) list.forEach(it=>rows.push({t:'d', it}));
+  });
+  const sums = {}; sumKeys.forEach(k=>sums[k]=items.reduce((a,b)=>a+(+b[k]||0),0));
+  rows.push({t:'t', sums});
+  return rows;
+}
+const rowTheme = rows => row => {
+  const r = rows[row]; if(!r) return undefined;
+  if(r.t==='g') return {bgCell:SEC[r.sec].bg, baseFontStyle:'600 13px', textDark:SEC[r.sec].c};
+  if(r.t==='t') return {bgCell:'#e2efda', baseFontStyle:'700 13px'};
+  return undefined;
+};
+
+/* Shared grid wrapper: Excel-like defaults + selection Sum/Count/Average */
+function Grid({cols, rows, getCell, onEdit, onToggle, sort, setSort, freeze=1, height, onStats}){
+  const [widths, setWidths] = useState({});
+  const [sel, setSel] = useState(undefined);
+  const [search, setSearch] = useState(false);
+  const columns = useMemo(()=>cols.map(c=>({
+    id:c.k, width:widths[c.k] ?? c.w, group:c.g,
+    title: c.l + (sort && sort.k===c.k ? (sort.dir>0?'  ▲':'  ▼') : ''),
+  })), [cols, widths, sort]);
+
+  useEffect(()=>{
+    const onKey = e => { if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='f'){ e.preventDefault(); setSearch(true); } };
+    window.addEventListener('keydown', onKey); return ()=>window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const onSel = useCallback(s=>{
+    setSel(s);
+    const rg = s?.current?.range; if(!rg || !onStats) return;
+    let sum=0, n=0, cnt=0;
+    for(let y=rg.y; y<rg.y+rg.height; y++) for(let x=rg.x; x<rg.x+rg.width; x++){
+      const c = getCell([x,y]); if(c.displayData) cnt++;
+      if(c.kind===GridCellKind.Number && typeof c.data==='number'){ sum+=c.data; n++; }
+    }
+    onStats(rg.width*rg.height>1 ? {sum, n, cnt} : null);
+  }, [getCell, onStats]);
+
+  return h(DataEditor, {
+    columns, rows: rows.length, getCellContent: getCell, theme,
+    width:'100%', height: height ?? '100%',
+    rowMarkers:'number', freezeColumns:freeze, smoothScrollX:true, smoothScrollY:true,
+    rowHeight:26, headerHeight:34, groupHeaderHeight:24,
+    getCellsForSelection:true,          // enables Ctrl+C copy (pastes into Excel as tab-separated)
+    onPaste:true,                        // paste from Excel into editable (orange) cells
+    rangeSelect:'rect', columnSelect:'none', rowSelect:'multi',
+    gridSelection: sel, onGridSelectionChange: onSel,
+    getRowThemeOverride: rowTheme(rows),
+    onColumnResize: (col, w) => setWidths(p=>({...p, [col.id]:w})),
+    onHeaderClicked: col => setSort && setSort(s => { const k=cols[col].k;
+      return !s || s.k!==k ? {k, dir:1} : s.dir>0 ? {k, dir:-1} : null; }),
+    onCellClicked: ([col,row]) => { if(rows[row]?.t==='g' && col===0 && onToggle) onToggle(rows[row].sec); },
+    onCellEdited: onEdit,
+    showSearch: search, onSearchClose: ()=>setSearch(false),
+  });
+}
+
+/* ---------- BOM sheet ---------- */
+const BOM_COLS = [
+  {k:'code', l:'Item Code', w:160},
+  {k:'item', l:'Item', w:200},
+  {k:'spec', l:'Description', w:250},
+  {k:'qty',  l:'Qty', w:80},
+  {k:'rate', l:'Rate ₹', w:100},
+  {k:'ext',  l:'Amount ₹', w:120},
+];
+function BomSheet({product, month, bump, onStats}){
+  const [collapsed, setCollapsed] = useState(new Set());
+  const [sort, setSort] = useState(null);
+  const items = product.bom.map(([code,qty], i)=>{ const m = MAT[code];
+    return {...m, qty, line:i, ext:qty*m.rate}; });
+  const rows = groupRows(items, collapsed, sort, ['ext']);
+
+  const getCell = useCallback(([col,row])=>{
+    const r = rows[row], k = BOM_COLS[col].k;
+    if(!r) return txt('');
+    if(r.t!=='d'){
+      if(col===0) return r.t==='g' ? txt(`${collapsed.has(r.sec)?'▸':'▾'}  ${SEC[r.sec].label}  (${r.count})`) : txt('Total – '+product.code);
+      if(k==='ext') return num(r.sums.ext, 2);
+      return txt('');
+    }
+    const it = r.it;
+    switch(k){
+      case 'qty':  return edit(it.qty, 2);
+      case 'rate': return edit(it.rate, 2);
+      case 'ext':  return num(it.ext, 2);
+      default: return txt(it[k]);
+    }
+  }, [rows, collapsed, product]);
+
+  const onEdit = useCallback(([col,row], v)=>{
+    const r = rows[row]; if(r?.t!=='d' || v.kind!==GridCellKind.Number || v.data==null) return;
+    const k = BOM_COLS[col].k, val = Math.max(0, v.data);
+    if(k==='qty') product.bom[r.it.line][1] = val;   // TODO: PUT /api/bom/{product}/{line}
+    if(k==='rate') MAT[r.it.code].rate = val;        // TODO: PUT /api/materials/{code}
+    bump();
+  }, [rows, product, bump]);
+
+  const toggle = sec => setCollapsed(s=>{ const n=new Set(s); n.has(sec)?n.delete(sec):n.add(sec); return n; });
+
+  return h(React.Fragment, null,
+    h('div', {className:'strip head'},
+      h('div', {className:'info'},
+        h('div', {className:'l1'},
+          h('h2', null, product.code, product.vendor ? h('span', {className:'vendor'}, ' - ' + product.vendor) : null),
+          h('span', {className:'ver', title:'BOM version'}, 'BOM ' + product.rev)),
+        h('div', {className:'l2'},
+          [['MOTOR','Motor',product.motor], ['PUMP','Pump',product.pump], ['PANEL','Panel',product.panel]].filter(x=>x[2]).map(([s,l,v])=>
+            h('span', {key:s, className:'spec', style:{'--sc':SEC[s].c}}, l + ' - ', h('b', null, v))))),
+      h('div', {className:'acts'},
+        h('button', {onClick:()=>setCollapsed(new Set(SECORD))}, 'Collapse all'),
+        h('button', {onClick:()=>setCollapsed(new Set())}, 'Expand all'),
+        h('button', {onClick:()=>setSort(null)}, 'Clear sort'))
+    ),
+    h('div', {className:'gridbox'}, h(Grid, {cols:BOM_COLS, rows, getCell, onEdit, onToggle:toggle, sort, setSort, onStats}))
+  );
+}
+
+/* ---------- Monthly requirement sheet ---------- */
+function computeReq(month){
+  const plan = PLANS[month], start = new Date(month+'-01'), req = {};
+  PRODUCTS.forEach((p,pi)=>{ const q = plan[p.code]||0;
+    p.bom.forEach(([c,qty])=>{ const r = req[c] ||= {...MAT[c], gross:0}; r['p'+pi]=(r['p'+pi]||0)+q*qty; r.gross += q*qty; }); });
+  return Object.values(req).filter(r=>r.gross>0).map(r=>{
+    r.net = Math.max(0, r.gross-r.stock-r.po);
+    r.order = r.net>0 ? Math.ceil(r.net/r.moq)*r.moq : 0;
+    r.value = r.order*r.rate;
+    const ob = new Date(start); ob.setDate(ob.getDate()-r.lead);
+    r.orderBy = r.order ? ob.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
+    r.status = !r.order ? 'OK' : ob<TODAY ? 'LATE' : 'ORDER';
+    return r;
+  }).sort((a,b)=>a.code.localeCompare(b.code));
+}
+const PLAN_COLS = [
+  {k:'code', l:'Model', w:170}, {k:'name', l:'Description', w:290}, {k:'qty', l:'Plan Qty', w:100},
+  {k:'cost', l:'Cost / Pump ₹', w:120}, {k:'val', l:'Material Value ₹', w:140},
+];
+function MrpSheet({month, bump, onStats}){
+  const [collapsed, setCollapsed] = useState(new Set());
+  const [sort, setSort] = useState(null);
+  const plan = PLANS[month];
+  const items = computeReq(month);
+  const pk = PRODUCTS.map((p,i)=>'p'+i);
+  const cols = useMemo(()=>[
+    {k:'code', l:'Item Code', w:180, g:'Item'}, {k:'desc', l:'Description', w:240, g:'Item'}, {k:'uom', l:'UOM', w:55, g:'Item'},
+    ...PRODUCTS.map((p,i)=>({k:'p'+i, l:p.code, w:115, g:'Requirement by model'})),
+    {k:'gross', l:'Gross Req.', w:95, g:'Netting'}, {k:'stock', l:'Stock', w:75, g:'Netting'}, {k:'po', l:'Open PO', w:75, g:'Netting'},
+    {k:'net', l:'Net Shortage', w:100, g:'Netting'},
+    {k:'moq', l:'MOQ', w:65, g:'Purchase'}, {k:'order', l:'Order Qty', w:85, g:'Purchase'}, {k:'value', l:'Order Value ₹', w:115, g:'Purchase'},
+    {k:'orderBy', l:'Order By', w:80, g:'Purchase'}, {k:'status', l:'Status', w:75, g:'Purchase'}, {k:'sup', l:'Supplier', w:200, g:'Purchase'},
+  ], []);
+  const rows = groupRows(items, collapsed, sort, ['gross','net','order','value',...pk]);
+  const short = items.filter(i=>i.order>0), late = items.filter(i=>i.status==='LATE');
+
+  const getCell = useCallback(([col,row])=>{
+    const r = rows[row], k = cols[col].k;
+    if(!r) return txt('');
+    if(r.t!=='d'){
+      if(col===0) return r.t==='g' ? txt(`${collapsed.has(r.sec)?'▸':'▾'}  ${SEC[r.sec].label}  (${r.count})`) : txt('Total – '+monthName(month));
+      if(k==='value') return num(r.sums.value);
+      return txt('');   // mixed UOMs: don't add KG + NOS + MTR on group rows
+    }
+    const it = r.it;
+    if(pk.includes(k)) return num(it[k]||0, 1, {displayData: it[k] ? fmt(it[k],1) : ''});
+    switch(k){
+      case 'gross': return num(it.gross, 1);
+      case 'net':   return num(it.net, 1, it.net>0 ? {themeOverride:RED} : {});
+      case 'order': return num(it.order, 0, it.order ? {themeOverride:{baseFontStyle:'600 13px'}} : {});
+      case 'value': return num(it.value);
+      case 'stock': case 'po': case 'moq': return num(it[k]);
+      case 'status':return txt(it.status, {contentAlign:'center', themeOverride: it.status==='LATE'?RED : it.status==='ORDER'?AMBER : GREEN});
+      case 'uom': case 'orderBy': return txt(it[k], {contentAlign:'center'});
+      default: return txt(it[k]);
+    }
+  }, [rows, cols, collapsed, month]);
+
+  const planRows = PRODUCTS.map(p=>({t:'d', p}));
+  const planGet = useCallback(([col,row])=>{
+    const p = PRODUCTS[row], k = PLAN_COLS[col].k, q = plan[p.code]||0;
+    if(k==='code') return txt(p.code);
+    if(k==='name') return txt(p.name);
+    if(k==='qty')  return edit(q);
+    if(k==='cost') return num(bomCost(p));
+    return num(bomCost(p)*q);
+  }, [plan, month]);
+  const planEdit = useCallback(([col,row], v)=>{
+    if(PLAN_COLS[col].k!=='qty' || v.kind!==GridCellKind.Number || v.data==null) return;
+    plan[PRODUCTS[row].code] = Math.max(0, Math.round(v.data));   // TODO: PUT /api/plan/{month}
+    bump();
+  }, [plan, bump]);
+  const toggle = sec => setCollapsed(s=>{ const n=new Set(s); n.has(sec)?n.delete(sec):n.add(sec); return n; });
+
+  return h(React.Fragment, null,
+    h('div', {className:'strip'},
+      h('div', null, h('h2', null, 'Monthly Requirement – '+monthName(month)), h('div',{className:'sub'},'Plan × BOM qty → gross, less stock & open PO → net, rounded up to MOQ')),
+      h('div', {className:'kpi'}, h('div',{className:'k'},'Pumps planned'), h('div',{className:'v'}, fmt(Object.values(plan).reduce((a,b)=>a+b,0)))),
+      h('div', {className:'kpi'}, h('div',{className:'k'},'Items required'), h('div',{className:'v'}, items.length)),
+      h('div', {className:'kpi'}, h('div',{className:'k'},'Items to buy'), h('div',{className:'v '+(short.length?'bad':'good')}, short.length)),
+      h('div', {className:'kpi'}, h('div',{className:'k'},'Purchase value'), h('div',{className:'v'}, '₹'+fmt(short.reduce((a,b)=>a+b.value,0)/1e5,2)+' L')),
+      h('div', {className:'kpi'}, h('div',{className:'k'},'Late to order'), h('div',{className:'v '+(late.length?'bad':'good')}, late.length))
+    ),
+    h('div', {className:'planbox'}, h(Grid, {cols:PLAN_COLS, rows:planRows, getCell:planGet, onEdit:planEdit, height: 34 + 26*PRODUCTS.length + 2, onStats})),
+    h('div', {className:'tools'},
+      h('button', {onClick:()=>setCollapsed(new Set(SECORD))}, '⊟ Collapse all'),
+      h('button', {onClick:()=>setCollapsed(new Set())}, '⊞ Expand all'),
+      h('span', {className:'hint'}, 'Edit the orange Plan Qty cells (or paste a column from Excel) – the requirement recalculates instantly')
+    ),
+    h('div', {className:'gridbox'}, h(Grid, {cols, rows, getCell, onToggle:toggle, sort, setSort, freeze:1, onStats}))
+  );
+}
+
+/* ---------- App shell ---------- */
+function App(){
+  const [tab, setTab] = useState(location.hash==='#mrp' ? 'mrp' : 'bom');
+  const [code, setCode] = useState(PRODUCTS[0].code);
+  const [month, setMonth] = useState(Object.keys(PLANS)[0]);
+  const [q, setQ] = useState('');
+  const [ver, setVer] = useState(0);
+  const [stats, setStats] = useState(null);
+  const bump = useCallback(()=>setVer(v=>v+1), []);
+  const ql = q.trim().toLowerCase();
+  const list = PRODUCTS.filter(p=>!ql || [p.code,p.cat,p.vendor,p.motor,p.pump,p.panel,p.name,p.fam,p.hp+' hp',p.ph].join(' ').toLowerCase().includes(ql)
+                                     || p.bom.some(([c])=>(c+' '+MAT[c].desc).toLowerCase().includes(ql)));
+  const product = PRODUCTS.find(p=>p.code===code);
+
+  return h('div', {className:'app'},
+    h('div', {className:'top'},
+      h('div', {className:'logo'}, 'PB'), h('b', null, 'PumpBOM'),
+      h('div', {className:'tabs'},
+        h('button', {className:'tab'+(tab==='bom'?' on':''), onClick:()=>setTab('bom')}, 'BOM'),
+        h('button', {className:'tab'+(tab==='mrp'?' on':''), onClick:()=>setTab('mrp')}, 'Monthly Requirement')),
+      h('div', {className:'sp'}),
+      h('select', {value:month, onChange:e=>setMonth(e.target.value)}, Object.keys(PLANS).map(k=>h('option',{key:k, value:k}, monthName(k))))
+    ),
+    h('div', {className:'main'},
+      h('div', {className:'side'},
+        h('input', {placeholder:'Search pump, item code, part…', value:q, onChange:e=>setQ(e.target.value)}),
+        h('div', {className:'plist'}, list.map(p=>h('div', {key:p.code, className:'pi'+(p.code===code&&tab==='bom'?' on':''), onClick:()=>{setCode(p.code); setTab('bom');},
+          title:p.name},
+          h('div', {className:'pl1'}, h('b', null, p.code), p.vendor ? h('span', {className:'pv'}, p.vendor) : null),  // Product + Vendor
+          h('div', null, p.cat || p.fam))))      // Category
+      ),
+      h('div', {className:'work'},
+        tab==='bom' ? h(BomSheet, {key:code, ver, product, month, bump, onStats:setStats})
+                    : h(MrpSheet, {key:month, ver, month, bump, onStats:setStats}))
+    ),
+    h('div', {className:'status'},
+      h('span', null, 'Ready'), h('span', {className:'sp'}),
+      stats && stats.n ? h('span', null, 'Average: ', h('b', null, fmt(stats.sum/stats.n,2))) : null,
+      stats ? h('span', null, 'Count: ', h('b', null, stats.cnt)) : null,
+      stats && stats.n ? h('span', null, 'Sum: ', h('b', null, fmt(stats.sum,2))) : null)
+  );
+}
+
+createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

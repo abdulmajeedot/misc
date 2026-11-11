@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PumpBOM Workbook</title>
+<!--
+  PumpBOM – prototype UI (single file, no internet needed; safe for office LAN hosting)
+  Design ideology:
+    1. Looks & behaves like Excel: grid lines, A/B/C column letters, row numbers, name box + fx bar,
+       sheet tabs, status bar with Sum/Count/Average, outline grouping (1-2-3 levels), autofilter,
+       freeze panes, Excel conditional-format colours, Ctrl+C pastes straight into Excel.
+    2. Product-first: search a pump on the left, its BOM opens grouped Motor / Pump / Panel / Packing.
+    3. Every number shows its formula in the fx bar, so planners can trust the maths.
+    4. Same grid engine for BOM, Monthly Requirement (MRP), Where-Used and Material Master.
+  Replace the DATA section with API calls to your backend (e.g. /api/products, /api/materials, /api/plan).
+-->
+<style>
+:root{
+  --g:#217346; --gd:#185c37; --gl:#e9f3ee;
+  --line:#dadada; --hdr:#f3f3f3; --hdr-on:#d3e8dc; --ink:#1f1f1f; --mut:#666;
+  --sel:rgba(33,115,70,.12);
+  --bad-bg:#ffc7ce; --bad:#9c0006; --warn-bg:#ffeb9c; --warn:#9c5700; --good-bg:#c6efce; --good:#006100;
+  --inp-bg:#ffcc99; --inp:#3f3f76;
+  font-family:"Segoe UI",Calibri,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#fff;color:var(--ink);font-size:13px}
+button,select,input{font:inherit;color:inherit}
+.app{display:flex;flex-direction:column;height:100vh;min-width:0}
+
+/* title bar */
+.titlebar{background:var(--g);color:#fff;display:flex;align-items:center;gap:14px;padding:0 12px;height:38px;flex:none}
+.logo{width:24px;height:24px;border-radius:3px;background:#fff;color:var(--g);font-weight:700;display:grid;place-items:center;font-size:11px}
+.titlebar .t{font-weight:600}
+.titlebar .crumb{opacity:.85;font-size:12px}
+.titlebar .sp{flex:1}
+.titlebar .user{font-size:12px;opacity:.9}
+
+/* ribbon */
+.ribbon{display:flex;gap:0;background:#f8f8f8;border-bottom:1px solid var(--line);padding:6px 6px 0;flex:none;overflow-x:auto}
+.rg{display:flex;flex-direction:column;padding:0 10px;border-right:1px solid #e4e4e4}
+.rg:last-child{border-right:0}
+.rg .btns{display:flex;gap:4px;align-items:center;min-height:30px;flex-wrap:nowrap}
+.rg .lbl{font-size:11px;color:var(--mut);text-align:center;padding:3px 0 4px;white-space:nowrap}
+.rb{border:1px solid transparent;background:transparent;border-radius:3px;padding:4px 8px;cursor:pointer;white-space:nowrap;display:inline-flex;gap:5px;align-items:center}
+.rb:hover{background:#e6e6e6;border-color:#d0d0d0}
+.rb.on{background:var(--hdr-on);border-color:#9cc7ae}
+.rb.lvl{width:24px;justify-content:center;padding:4px 0;border-color:#cfcfcf;background:#fff;font-weight:600}
+.rb.primary{background:var(--g);color:#fff}
+.rb.primary:hover{background:var(--gd)}
+.rsel{border:1px solid #c8c8c8;border-radius:3px;padding:3px 4px;background:#fff}
+
+/* formula bar */
+.fbar{display:flex;align-items:center;border-bottom:1px solid var(--line);height:28px;flex:none;background:#fff}
+#namebox{width:110px;border:0;border-right:1px solid var(--line);height:100%;padding:0 8px;font-family:Consolas,monospace;font-size:12px}
+.fx{width:34px;text-align:center;color:var(--mut);font-style:italic;font-family:Cambria,serif;border-right:1px solid var(--line);height:100%;display:grid;place-items:center}
+#fx{flex:1;border:0;height:100%;padding:0 8px;font-family:Consolas,monospace;font-size:12px;min-width:0}
+
+/* body */
+.main{flex:1;display:flex;min-height:0}
+.side{width:290px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#fbfbfb;min-height:0}
+.side .sbox{padding:10px;border-bottom:1px solid var(--line)}
+.search{width:100%;border:1px solid #bdbdbd;border-radius:3px;padding:6px 8px;background:#fff}
+.search:focus{outline:2px solid var(--g);outline-offset:-1px;border-color:var(--g)}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.chip{border:1px solid #cfcfcf;background:#fff;border-radius:12px;padding:2px 9px;font-size:12px;cursor:pointer}
+.chip.on{background:var(--g);border-color:var(--g);color:#fff}
+.slist{overflow:auto;flex:1}
+.shead{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;padding:10px 10px 4px}
+.pi{padding:8px 10px;border-left:3px solid transparent;cursor:pointer;border-bottom:1px solid #eee}
+.pi:hover{background:#f0f0f0}
+.pi.on{background:var(--gl);border-left-color:var(--g)}
+.pi .c{font-weight:600;font-family:Consolas,monospace;font-size:12px}
+.pi .n{color:#333;margin:2px 0 4px}
+.pi .m{display:flex;gap:6px;font-size:11px;color:var(--mut);flex-wrap:wrap}
+.tag{background:#eee;border-radius:2px;padding:0 5px}
+.ci{padding:6px 10px;cursor:pointer;border-bottom:1px solid #eee;font-size:12px}
+.ci:hover{background:#f0f0f0}
+.ci .c{font-family:Consolas,monospace;font-weight:600}
+.ci .u{color:var(--g);font-size:11px}
+mark{background:#fff2a8;padding:0}
+
+.work{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
+.card{display:flex;gap:18px;align-items:stretch;padding:10px 14px;border-bottom:1px solid var(--line);background:#fff;flex:none;flex-wrap:wrap}
+.card h2{margin:0;font-size:17px;font-weight:600}
+.card .sub{color:var(--mut);font-size:12px;margin-top:3px}
+.kpis{display:flex;gap:0;border:1px solid var(--line);border-radius:3px}
+.kpi{padding:5px 14px;border-right:1px solid var(--line);min-width:96px}
+.kpi:last-child{border-right:0}
+.kpi .k{font-size:11px;color:var(--mut)}
+.kpi .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.kpi .v.bad{color:var(--bad)} .kpi .v.good{color:var(--good)}
+.kpi .s{font-size:11px;color:var(--mut)}
+.split{min-width:260px;flex:1;max-width:420px}
+.split .bar{display:flex;height:14px;border-radius:2px;overflow:hidden;margin:6px 0 5px}
+.split .lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:#444}
+.split .lg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+
+.gridhost{flex:1;overflow:auto;min-height:0;background:#fff;position:relative}
+
+/* Excel grid */
+table.xl{border-collapse:separate;border-spacing:0;table-layout:fixed;font-variant-numeric:tabular-nums;user-select:none}
+.xl th,.xl td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);height:22px;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
+.xl td{cursor:cell;background:#fff}
+.xl thead th{position:sticky;background:var(--hdr);z-index:3;color:#444}
+.xl tr.letters th{top:0;height:20px;text-align:center;font-size:11px;cursor:s-resize}
+.xl tr.hdr th{top:20px;height:34px;white-space:normal;line-height:1.15;font-weight:600;background:#e8efe9;color:#1d3b2a;border-bottom:2px solid #9cc7ae;cursor:cell;vertical-align:middle}
+.xl tr.flt th{top:54px;padding:2px;background:#fafafa}
+.xl tr.flt input{width:100%;border:1px solid #cfcfcf;padding:1px 4px;font-size:11px;border-radius:2px}
+.xl .rn{position:sticky;left:0;z-index:2;background:var(--hdr);text-align:center;color:#555;font-size:11px;width:42px;padding:0 2px}
+.xl thead .rn,.xl .corner{z-index:5;left:0}
+.xl .corner{background:#e6e6e6}
+.xl.frz tbody td:nth-child(2),.xl.frz thead th:nth-child(2){position:sticky;left:42px;z-index:2;box-shadow:1px 0 0 #b9b9b9}
+.xl.frz thead th:nth-child(2){z-index:4}
+.xl th.on{background:var(--hdr-on);color:var(--gd);font-weight:600}
+.xl .num{text-align:right}
+.xl .ctr{text-align:center}
+.xl .mono,#xl td:nth-child(2){font-family:Consolas,"Cascadia Mono",monospace;font-size:12px}
+.xl tr.d td:nth-child(2){box-shadow:inset 3px 0 var(--sc,#999)}
+.xl.frz tr.d td:nth-child(2){box-shadow:inset 3px 0 var(--sc,#999),1px 0 0 #b9b9b9}
+/* group rows (Excel outline) */
+.xl tr.g1 td{background:var(--sb,#eef3f0);font-weight:600;border-top:1px solid var(--sc,#999)}
+#xl tr.g1 td:nth-child(2){color:var(--sc);overflow:visible;font-family:"Segoe UI",Calibri,sans-serif;font-size:13px}
+.xl tr.g2 td{background:#f7f7f7;font-weight:600;color:#333}
+#xl tr.g2 td:nth-child(2){overflow:visible;padding-left:20px;font-family:"Segoe UI",Calibri,sans-serif}
+.xl tr.d td:nth-child(2){padding-left:14px}
+.xl tr.d.l2 td:nth-child(2){padding-left:34px}
+.xl tr.tot td{background:#e2efda;font-weight:700;border-top:2px solid var(--g);border-bottom:3px double var(--g)}
+#xl tr.tot td:nth-child(2){overflow:visible;font-family:"Segoe UI",Calibri,sans-serif}
+.tg{display:inline-grid;place-items:center;width:14px;height:14px;border:1px solid #888;border-radius:2px;font-size:11px;line-height:1;margin-right:6px;background:#fff;color:#333;cursor:pointer;font-weight:400;vertical-align:-2px}
+.cnt{font-weight:400;color:var(--mut);font-size:11px;margin-left:4px}
+/* selection */
+.xl td.sel,.xl th.h.sel{background-image:linear-gradient(var(--sel),var(--sel))}
+.xl td.act,.xl th.h.act{outline:2px solid var(--g);outline-offset:-2px}
+/* conditional formats (Excel defaults) */
+.xl td.bad{background:var(--bad-bg);color:var(--bad)}
+.xl td.warn{background:var(--warn-bg);color:var(--warn)}
+.xl td.good{background:var(--good-bg);color:var(--good)}
+.xl td.inp{background:var(--inp-bg);color:var(--inp);padding:0}
+.xl td.inp input{width:100%;height:21px;border:0;background:transparent;text-align:right;padding:0 6px;font-weight:600;color:var(--inp)}
+.xl td.inp input:focus{outline:2px solid var(--g);background:#fff}
+.db{position:relative}
+.db .b{position:absolute;left:1px;top:3px;bottom:3px;background:linear-gradient(90deg,#63be7b,#c8e6cf);opacity:.75;border-radius:1px}
+.db span{position:relative}
+.pill{display:inline-block;padding:0 7px;border-radius:9px;font-size:11px;font-weight:600;line-height:16px}
+.pill.ok{background:var(--good-bg);color:var(--good)}
+.pill.order{background:var(--warn-bg);color:var(--warn)}
+.pill.late{background:var(--bad-bg);color:var(--bad)}
+.lnk{color:#0563c1;text-decoration:underline;cursor:pointer}
+
+.plan{margin:0}
+.planwrap{display:flex;gap:18px;padding:10px 14px;border-bottom:1px solid var(--line);flex:none;flex-wrap:wrap;align-items:flex-start}
+.planwrap h3{margin:0 0 6px;font-size:13px}
+.hint{font-size:11px;color:var(--mut);margin-top:6px}
+
+/* sheet tabs & status */
+.tabs{display:flex;align-items:flex-end;gap:0;background:#f3f3f3;border-top:1px solid var(--line);height:30px;flex:none;padding-left:8px;overflow-x:auto}
+.tabs .nav{color:#999;padding:0 8px;align-self:center}
+.tab{padding:5px 16px;cursor:pointer;border-right:1px solid #ddd;white-space:nowrap;color:#333}
+.tab:hover{background:#e9e9e9}
+.tab.on{background:#fff;color:var(--g);font-weight:600;border-bottom:3px solid var(--g);box-shadow:0 1px 0 #fff}
+.tab.add{color:#888}
+.status{display:flex;align-items:center;gap:22px;background:var(--g);color:#fff;font-size:12px;height:24px;padding:0 12px;flex:none}
+.status .sp{flex:1}
+.status b{font-weight:600}
+.toast{position:fixed;bottom:64px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:8px 16px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
+.toast.show{opacity:1}
+.empty{padding:40px;color:var(--mut);text-align:center}
+
+@media (max-width:900px){
+  .side{width:220px}
+  .split{min-width:200px}
+}
+@media (max-width:640px){
+  .main{flex-direction:column}
+  .side{width:auto;max-height:38vh;border-right:0;border-bottom:1px solid var(--line)}
+  .titlebar .crumb,.titlebar .user{display:none}
+}
+@media print{
+  .titlebar,.ribbon,.fbar,.side,.tabs,.status{display:none!important}
+  .app{height:auto}.gridhost{overflow:visible}
+  .xl thead th,.xl .rn,.xl.frz td{position:static!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="titlebar">
+    <div class="logo">PB</div>
+    <div class="t">PumpBOM</div>
+    <div class="crumb" id="crumb"></div>
+    <div class="sp"></div>
+    <div class="user">Plant 1 · Planning &amp; Purchase</div>
+  </header>
+
+  <div class="ribbon">
+    <div class="rg"><div class="btns">
+      <button class="rb" data-act="copy" title="Copy selected cells (Ctrl+C) – paste into Excel">⧉ Copy</button>
+      <button class="rb" data-act="csv" title="Download the visible sheet as CSV">⬇ Export CSV</button>
+      <button class="rb" data-act="print" title="Print sheet">⎙ Print</button>
+    </div><div class="lbl">Clipboard</div></div>
+
+    <div class="rg"><div class="btns">
+      <button class="rb lvl" data-act="lvl" data-l="1" title="Show sections only">1</button>
+      <button class="rb lvl" data-act="lvl" data-l="2" title="Show sub-assemblies">2</button>
+      <button class="rb lvl" data-act="lvl" data-l="3" title="Show all items">3</button>
+      <select class="rsel" id="groupBy" title="Group rows by">
+        <option value="sec2">Section › Sub-assembly</option>
+        <option value="sec">Section only</option>
+        <option value="sup">Supplier</option>
+        <option value="flat">No grouping (flat)</option>
+      </select>
+    </div><div class="lbl">Outline &amp; Group</div></div>
+
+    <div class="rg"><div class="btns">
+      <button class="rb" id="btnFilter" data-act="filter" title="Ctrl+Shift+L">⏷ Filter</button>
+      <button class="rb" data-act="clearf">✕ Clear</button>
+    </div><div class="lbl">Sort &amp; Filter</div></div>
+
+    <div class="rg"><div class="btns">
+      <button class="rb on" id="btnFreeze" data-act="freeze">❄ Freeze Panes</button>
+      <select class="rsel" id="zoom" title="Zoom">
+        <option>80</option><option>90</option><option selected>100</option><option>110</option><option>125</option>
+      </select>
+    </div><div class="lbl">View</div></div>
+
+    <div class="rg"><div class="btns">
+      <select class="rsel" id="month" title="Production month"></select>
+      <button class="rb primary" data-act="explode" title="Explode the production plan through all BOMs">▶ Monthly Requirement</button>
+      <button class="rb" data-act="pr" title="Create purchase requisition for shortages">🛒 Raise PR</button>
+    </div><div class="lbl">Planning</div></div>
+  </div>
+
+  <div class="fbar">
+    <input id="namebox" readonly aria-label="Name box">
+    <div class="fx">fx</div>
+    <input id="fx" readonly aria-label="Formula bar">
+  </div>
+
+  <div class="main">
+    <aside class="side">
+      <div class="sbox">
+        <input class="search" id="q" placeholder="Search pump, item code, part name…  ( / )" autocomplete="off">
+        <div class="chips" id="fam"></div>
+      </div>
+      <div class="slist" id="slist"></div>
+    </aside>
+    <section class="work" id="work"></section>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <footer class="status">
+    <span id="stMode">Ready</span>
+    <span class="sp"></span>
+    <span id="stAvg"></span><span id="stCnt"></span><span id="stSum"></span>
+    <span id="stZoom">100%</span>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   DATA  (replace with fetch('/api/...') from your on-prem server)
+   =================================================================== */
+const SEC = {
+  MOTOR:{label:'Motor Side', c:'#2f6fb3', bg:'#e6eef9'},
+  PUMP: {label:'Pump Side',  c:'#c55a11', bg:'#fcece0'},
+  PANEL:{label:'Panel Side', c:'#7030a0', bg:'#f1e8f8'},
+  PACK: {label:'Packing & Hardware', c:'#5f6b73', bg:'#eceff1'}
+};
+const SECORD = ['MOTOR','PUMP','PANEL','PACK'];
+const MAT = {};
+function m(code,desc,sec,sub,uom,rate,stock,po,sup,lead,moq,mb='Buy'){MAT[code]={code,desc,sec,sub,uom,rate,stock,po,sup,lead,moq,mb};}
+// code, description, section, sub-assembly, UOM, rate ₹, stock, open PO, supplier, lead days, MOQ, make/buy
+m('M-STP-100','Stator stamping set, 100 mm stack','MOTOR','Stator','SET',1450,180,100,'Sri Lakshmi Stampings',12,25);
+m('M-STP-150','Stator stamping set, 150 mm stack','MOTOR','Stator','SET',1980,60,50,'Sri Lakshmi Stampings',12,25);
+m('M-STP-V4','Stator stamping set, V4 submersible','MOTOR','Stator','SET',1350,220,0,'Sri Lakshmi Stampings',12,50);
+m('M-CUW-22','Copper winding wire 22 SWG (enamelled)','MOTOR','Stator','KG',890,340,200,'Hindustan Copper Traders',7,50);
+m('M-CUW-24','Copper winding wire 24 SWG (enamelled)','MOTOR','Stator','KG',905,260,0,'Hindustan Copper Traders',7,50);
+m('M-CUW-PVC','PVC insulated winding wire 1.0 mm','MOTOR','Stator','KG',960,300,150,'Hindustan Copper Traders',10,50);
+m('M-INS-01','Insulation kit (slot paper, sleeves, varnish)','MOTOR','Stator','SET',180,260,0,'Insulcraft Supplies',5,100);
+m('M-ROT-100','Rotor, die-cast aluminium, 100 mm','MOTOR','Rotor & Shaft','NOS',1250,200,60,'Coimbatore Castings',15,25);
+m('M-ROT-150','Rotor, die-cast aluminium, 150 mm','MOTOR','Rotor & Shaft','NOS',1690,40,40,'Coimbatore Castings',15,25);
+m('M-ROT-V4','Rotor, V4 submersible','MOTOR','Rotor & Shaft','NOS',980,180,0,'Coimbatore Castings',15,50);
+m('M-SFT-24','Shaft EN8, Ø24 mm','MOTOR','Rotor & Shaft','NOS',420,260,0,'In-house machine shop',4,1,'Make');
+m('M-SFT-28','Shaft SS410, Ø28 mm','MOTOR','Rotor & Shaft','NOS',780,90,0,'In-house machine shop',4,1,'Make');
+m('M-SFT-V4','Shaft SS410, V4 submersible','MOTOR','Rotor & Shaft','NOS',650,320,0,'In-house machine shop',4,1,'Make');
+m('M-BRG-6204','Ball bearing 6204 ZZ','MOTOR','Bearings','NOS',95,600,0,'Bearing Distributors Pvt Ltd',5,100);
+m('M-BRG-6205','Ball bearing 6205 ZZ','MOTOR','Bearings','NOS',120,220,0,'Bearing Distributors Pvt Ltd',5,100);
+m('M-BRG-6306','Ball bearing 6306 2RS','MOTOR','Bearings','NOS',310,70,100,'Bearing Distributors Pvt Ltd',5,50);
+m('M-BRG-THR','Thrust bearing assembly, V4','MOTOR','Bearings','NOS',420,140,100,'Bearing Distributors Pvt Ltd',21,50);
+m('M-BDY-01','Motor body, cast iron','MOTOR','Housing','NOS',980,420,0,'Coimbatore Castings',20,25);
+m('M-BDY-V4','Motor shell, SS304, V4','MOTOR','Housing','NOS',1100,250,0,'Steelform Fabricators',18,25);
+m('M-ESH-01','End shield DE / NDE, cast iron','MOTOR','Housing','NOS',260,700,0,'Coimbatore Castings',20,50);
+m('M-FAN-01','Cooling fan, polypropylene','MOTOR','Housing','NOS',45,300,0,'Plastomould Industries',6,200);
+m('M-FCV-01','Fan cover, pressed steel','MOTOR','Housing','NOS',85,250,0,'Plastomould Industries',6,100);
+m('M-TBX-01','Terminal box with cover','MOTOR','Housing','NOS',110,180,0,'Plastomould Industries',6,100);
+m('M-CAP-36','Run capacitor 36 µF 440 V','MOTOR','Electrical','NOS',240,150,200,'Elmex Electricals',10,100);
+m('P-IMP-MB5','Impeller, bronze, MBP 5 HP','PUMP','Hydraulics','NOS',1150,60,40,'In-house foundry',8,10,'Make');
+m('P-IMP-MB3','Impeller, bronze, MBP 3 HP','PUMP','Hydraulics','NOS',820,90,0,'In-house foundry',8,10,'Make');
+m('P-IMP-OW','Impeller, cast iron, openwell','PUMP','Hydraulics','NOS',650,100,0,'In-house foundry',8,10,'Make');
+m('P-IMP-SS4','Impeller stage, SS, V4','PUMP','Hydraulics','NOS',210,1800,1000,'Precision Pressings',14,500);
+m('P-DIF-SS4','Diffuser stage, SS, V4','PUMP','Hydraulics','NOS',190,2400,1000,'Precision Pressings',14,500);
+m('P-CAS-MB5','Pump casing, cast iron, MBP 5 HP','PUMP','Casing','NOS',1450,50,50,'Coimbatore Castings',20,10);
+m('P-CAS-MB3','Pump casing, cast iron, MBP 3 HP','PUMP','Casing','NOS',1150,160,0,'Coimbatore Castings',20,10);
+m('P-CAS-OW','Pump casing, openwell','PUMP','Casing','NOS',1100,40,0,'Coimbatore Castings',20,10);
+m('P-PSH-V4','Pump shell, SS304, V4','PUMP','Casing','NOS',720,320,0,'Steelform Fabricators',18,25);
+m('P-MSL-20','Mechanical seal, 20 mm','PUMP','Sealing','NOS',340,150,200,'SealTech India',12,50);
+m('P-WRG-01','Wear ring, bronze','PUMP','Sealing','NOS',60,300,0,'In-house foundry',8,50,'Make');
+m('P-GKT-01','Gasket & O-ring set','PUMP','Sealing','SET',35,900,0,'SealTech India',7,200);
+m('P-FLG-50','Flange, 50 mm, suction/delivery','PUMP','Connections','NOS',140,500,0,'Coimbatore Castings',20,50);
+m('P-NRV-V4','NRV housing, V4','PUMP','Connections','NOS',380,80,200,'Precision Pressings',14,100);
+m('P-SUC-V4','Suction interconnector, V4','PUMP','Connections','NOS',290,360,0,'Precision Pressings',14,100);
+m('E-STR-DOL','DOL starter, 5 HP, 3-phase','PANEL','Switchgear','NOS',2400,40,60,'Shakti Switchgear',10,10);
+m('E-STR-1PH','Single-phase starter with capacitor box','PANEL','Switchgear','NOS',1650,170,0,'Shakti Switchgear',10,10);
+m('E-CTB-1PH','Control box, 1-phase submersible','PANEL','Switchgear','NOS',1850,120,100,'Shakti Switchgear',10,25);
+m('E-CON-25','Contactor 25 A','PANEL','Switchgear','NOS',1150,60,0,'Shakti Switchgear',10,10);
+m('E-OLR-10','Overload relay 7–10 A','PANEL','Switchgear','NOS',780,55,0,'Shakti Switchgear',10,10);
+m('E-MCB-32','MCB 32 A, TP','PANEL','Switchgear','NOS',650,260,0,'Elmex Electricals',7,20);
+m('E-MCB-16','MCB 16 A, DP','PANEL','Switchgear','NOS',420,200,0,'Elmex Electricals',7,20);
+m('E-ENC-01','Panel enclosure, MS powder coated','PANEL','Enclosure','NOS',1350,300,0,'Steelform Fabricators',15,25);
+m('E-VMT-01','Voltmeter, digital','PANEL','Metering','NOS',320,320,0,'Elmex Electricals',7,50);
+m('E-AMT-01','Ammeter, digital','PANEL','Metering','NOS',320,300,0,'Elmex Electricals',7,50);
+m('E-LMP-01','Indicator lamp set (R/Y/B)','PANEL','Metering','SET',120,150,0,'Elmex Electricals',7,50);
+m('E-CBL-4','Cable 4 sq.mm, 3-core','PANEL','Cabling','MTR',165,1500,0,'Cable House Traders',5,500);
+m('E-CBL-25','Cable 2.5 sq.mm, 3-core','PANEL','Cabling','MTR',110,900,0,'Cable House Traders',5,500);
+m('E-FLC-25','Flat cable 2.5 sq.mm, submersible','PANEL','Cabling','MTR',95,4000,2000,'Cable House Traders',5,1000);
+m('H-FST-01','Fastener kit (bolts, nuts, washers)','PACK','Hardware','SET',75,600,0,'Fastners Corner',4,200);
+m('H-NPL-01','Name plate, SS etched','PACK','Hardware','NOS',25,900,0,'Fastners Corner',4,500);
+m('H-BOX-L','Corrugated box, 5-ply, large','PACK','Packing','NOS',140,320,200,'Box & Pack Industries',6,200);
+m('H-MAN-01','Manual & warranty card','PACK','Packing','NOS',8,2000,0,'Box & Pack Industries',6,1000);
+
+const PACKING = [['H-FST-01',1],['H-NPL-01',1],['H-BOX-L',1],['H-MAN-01',1]];
+const PRODUCTS = [
+  {code:'MBP-5HP-3PH', name:'Monoblock Pump 5 HP, 3-Phase', fam:'Monoblock', hp:5, ph:'3Φ 415 V', spec:'Head 32 m · Flow 600 LPM · 65×50 mm', rev:'R3',
+   bom:[['M-STP-150',1],['M-CUW-22',4.2],['M-INS-01',1],['M-ROT-150',1],['M-SFT-28',1],['M-BRG-6306',1],['M-BRG-6205',1],['M-BDY-01',1],['M-ESH-01',2],['M-FAN-01',1],['M-FCV-01',1],['M-TBX-01',1],
+        ['P-IMP-MB5',1],['P-CAS-MB5',1],['P-MSL-20',1],['P-WRG-01',1],['P-GKT-01',1],['P-FLG-50',2],
+        ['E-STR-DOL',1],['E-MCB-32',1],['E-ENC-01',1],['E-VMT-01',1],['E-AMT-01',1],['E-LMP-01',1],['E-CBL-4',3],...PACKING]},
+  {code:'MBP-3HP-1PH', name:'Monoblock Pump 3 HP, 1-Phase', fam:'Monoblock', hp:3, ph:'1Φ 230 V', spec:'Head 28 m · Flow 400 LPM · 50×50 mm', rev:'R5',
+   bom:[['M-STP-100',1],['M-CUW-24',2.8],['M-INS-01',1],['M-ROT-100',1],['M-SFT-24',1],['M-BRG-6204',1],['M-BRG-6205',1],['M-BDY-01',1],['M-ESH-01',2],['M-FAN-01',1],['M-FCV-01',1],['M-TBX-01',1],['M-CAP-36',1],
+        ['P-IMP-MB3',1],['P-CAS-MB3',1],['P-MSL-20',1],['P-WRG-01',1],['P-GKT-01',1],['P-FLG-50',2],
+        ['E-STR-1PH',1],['E-MCB-16',1],['E-ENC-01',1],['E-VMT-01',1],['E-AMT-01',1],['E-CBL-25',3],...PACKING]},
+  {code:'SUB-V4-1HP-1PH', name:'V4 Submersible 1 HP, 1-Phase, 12 stage', fam:'Submersible', hp:1, ph:'1Φ 230 V', spec:'Head 90 m · Flow 60 LPM · 100 mm bore', rev:'R2',
+   bom:[['M-STP-V4',1],['M-CUW-PVC',1.6],['M-ROT-V4',1],['M-SFT-V4',1],['M-BRG-THR',1],['M-BDY-V4',1],['M-CAP-36',1],
+        ['P-IMP-SS4',12],['P-DIF-SS4',12],['P-PSH-V4',1],['P-NRV-V4',1],['P-SUC-V4',1],['P-GKT-01',1],
+        ['E-CTB-1PH',1],['E-FLC-25',20],...PACKING]},
+  {code:'OWP-2HP-3PH', name:'Openwell Submersible 2 HP, 3-Phase', fam:'Openwell', hp:2, ph:'3Φ 415 V', spec:'Head 24 m · Flow 350 LPM · 50 mm', rev:'R1',
+   bom:[['M-STP-100',1],['M-CUW-PVC',2.2],['M-INS-01',1],['M-ROT-100',1],['M-SFT-24',1],['M-BRG-6204',2],['M-BDY-01',1],['M-ESH-01',2],
+        ['P-IMP-OW',1],['P-CAS-OW',1],['P-MSL-20',1],['P-GKT-01',1],['P-FLG-50',1],
+        ['E-CON-25',1],['E-OLR-10',1],['E-MCB-32',1],['E-ENC-01',1],['E-LMP-01',1],['E-CBL-4',10],...PACKING]},
+];
+const PLANS = {
+  '2026-12':{'MBP-5HP-3PH':120,'MBP-3HP-1PH':150,'SUB-V4-1HP-1PH':300,'OWP-2HP-3PH':80},
+  '2027-01':{'MBP-5HP-3PH':140,'MBP-3HP-1PH':160,'SUB-V4-1HP-1PH':350,'OWP-2HP-3PH':60},
+  '2027-02':{'MBP-5HP-3PH':100,'MBP-3HP-1PH':180,'SUB-V4-1HP-1PH':400,'OWP-2HP-3PH':90},
+};
+const TODAY = new Date('2026-11-11');
+
+/* ===================================================================
+   STATE & HELPERS
+   =================================================================== */
+const S = {sheet:'bom', product:PRODUCTS[0].code, groupBy:'sec2', collapsed:new Set(), filterOn:false, filters:{},
+           freeze:true, zoom:100, month:'2026-12', comp:'M-CAP-36', q:'', fam:'All'};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const fmtN = (v,d=0) => Number(v).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const colL = i => { let s='', n=i+1; while(n>0){ const r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=Math.floor((n-1)/26);} return s; };
+const prod = code => PRODUCTS.find(p=>p.code===code);
+const monthName = k => new Date(k+'-01').toLocaleString('en-IN',{month:'long',year:'numeric'});
+const ddmmm = d => d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+const bomCost = p => p.bom.reduce((a,[c,q])=>a+q*MAT[c].rate,0);
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+function hl(text,q){ if(!q) return esc(text); const i=text.toLowerCase().indexOf(q.toLowerCase()); if(i<0) return esc(text);
+  return esc(text.slice(0,i))+'<mark>'+esc(text.slice(i,i+q.length))+'</mark>'+esc(text.slice(i+q.length)); }
+
+/* ===================================================================
+   GRID ENGINE  (Excel look: letters, row numbers, outline groups, formulas)
+   =================================================================== */
+let G = null;                       // current main grid
+const sel = {a:null, b:null, drag:false};
+
+function levelsFor(mode){
+  const sec = {key:it=>it.sec, label:k=>SEC[k].label, style:k=>`--sc:${SEC[k].c};--sb:${SEC[k].bg}`, order:(a,b)=>SECORD.indexOf(a)-SECORD.indexOf(b)};
+  const sub = {key:it=>it.sub, label:k=>k};
+  const sup = {key:it=>it.sup, label:k=>k, style:()=>'--sc:#217346;--sb:#e9f3ee', order:(a,b)=>a.localeCompare(b)};
+  return {sec2:[sec,sub], sec:[sec], sup:[sup], flat:[]}[mode];
+}
+
+// items → outline rows (g1/g2 group headers with subtotals, d = detail rows, tot = grand total)
+function buildRows(items, mode, sumKeys, labelKey, totLabel){
+  const levels = levelsFor(mode), rows = [];
+  (function rec(list, depth, anc, style){
+    if(depth===levels.length){
+      list.forEach(it=>rows.push({kind:'d', lvl:depth, anc, cells:it, cls:it._cls||{}, style:`--sc:${SEC[it.sec]?.c||'#999'}`}));
+      return;
+    }
+    const lv = levels[depth], groups = new Map();
+    list.forEach(it=>{ const k=lv.key(it); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(it); });
+    const keys = lv.order ? [...groups.keys()].sort(lv.order) : [...groups.keys()];
+    keys.forEach(k=>{
+      const sub = groups.get(k), key = anc.length ? anc[anc.length-1]+'|'+k : k;
+      const st = lv.style ? lv.style(k) : style;
+      const cells = {}; sumKeys.forEach(s=>cells[s]=sub.reduce((a,b)=>a+(+b[s]||0),0));
+      cells[labelKey] = lv.label(k);
+      rows.push({kind:'g'+(depth+1), key, anc:[...anc], cells, cls:{}, style:st, count:sub.length});
+      rec(sub, depth+1, [...anc,key], st);
+    });
+  })(items, 0, [], '');
+  const tc = {}; sumKeys.forEach(s=>tc[s]=items.reduce((a,b)=>a+(+b[s]||0),0)); tc[labelKey]=totLabel;
+  rows.push({kind:'tot', anc:[], cells:tc, cls:{}});
+  return rows;
+}
+
+function gridHTML(cols, rows){
+  const L = k => colL(cols.findIndex(c=>c.k===k));
+  let n = 1; rows.forEach(r=>r.n = ++n);
+  const ranges = {};
+  rows.forEach(r=>{ if(r.kind==='d') r.anc.forEach(a=>{ const g=ranges[a]||(ranges[a]={a:r.n,b:r.n}); g.a=Math.min(g.a,r.n); g.b=Math.max(g.b,r.n); }); });
+  const dRows = rows.filter(r=>r.kind==='d'); const first = dRows[0]?.n, last = dRows[dRows.length-1]?.n;
+  G = {cols, rows, formulas:{}, L, maxR:n};
+  const tw = 42 + cols.reduce((a,c)=>a+c.w,0);
+  let h = `<table class="xl${S.freeze?' frz':''}" id="xl" style="width:${tw}px"><colgroup><col style="width:42px">${cols.map(c=>`<col style="width:${c.w}px">`).join('')}</colgroup><thead>`;
+  h += `<tr class="letters"><th class="rn corner"></th>${cols.map((c,i)=>`<th data-col="${i}">${colL(i)}</th>`).join('')}</tr>`;
+  h += `<tr class="hdr"><th class="rn" data-row="1">1</th>${cols.map((c,i)=>`<th class="h ${c.t||''}" data-r="1" data-c="${i}" title="${esc(c.tip||c.l)}">${c.l}</th>`).join('')}</tr>`;
+  if(S.filterOn) h += `<tr class="flt"><th class="rn">⏷</th>${cols.map(c=>`<th><input data-fk="${c.k}" value="${esc(S.filters[c.k]||'')}" placeholder="contains…"></th>`).join('')}</tr>`;
+  h += '</thead><tbody>';
+  rows.forEach(r=>{
+    h += `<tr class="${r.kind}${r.kind==='d'&&r.lvl>=2?' l2':''}" data-key="${esc(r.key||'')}" style="${r.style||''}"><th class="rn" data-row="${r.n}">${r.n}</th>`;
+    cols.forEach((c,i)=>{
+      const v = r.cells[c.k];
+      let f = null;
+      if(r.kind==='d' && c.f) f = c.f(r.n, L, r);
+      else if(c.sum && r.kind!=='d'){
+        const rg = r.kind==='tot' ? (first?{a:first,b:last}:null) : ranges[r.key];
+        if(rg) f = `=SUBTOTAL(9,${colL(i)}${rg.a}:${colL(i)}${rg.b})`;
+      }
+      if(f) G.formulas[r.n+','+i] = f;
+      let disp;
+      if(i===0 && r.kind[0]==='g') disp = `<span class="tg" data-tg="${esc(r.key)}">−</span>${esc(v)}<span class="cnt">(${r.count} items)</span>`;
+      else if(i===0 && r.kind==='tot') disp = esc(v);
+      else if(r.kind!=='d' && !c.sum && i>0) disp = '';
+      else if(c.r) disp = c.r(v, r);
+      else if(v==null || v==='') disp = '';
+      else disp = typeof v==='number' && c.t==='num' ? fmtN(v, c.d??0) : esc(v);
+      const dv = typeof v==='number' && (r.kind==='d' || c.sum) ? ` data-v="${v}"` : '';
+      h += `<td data-r="${r.n}" data-c="${i}" class="${c.t||''} ${r.cls[c.k]||''}"${dv}>${disp}</td>`;
+    });
+    h += '</tr>';
+  });
+  return h + '</tbody></table>';
+}
+
+function mountGrid(host, cols, rows){
+  host.innerHTML = gridHTML(cols, rows);
+  host.style.zoom = S.zoom/100;
+  G.trs = [...host.querySelectorAll('#xl tbody tr')];
+  G.cell = {};
+  host.querySelectorAll('#xl [data-r]').forEach(td=>{ (G.cell[td.dataset.r] ||= {})[td.dataset.c] = td; });
+  sel.a = sel.b = null;
+  applyVis(); paintSel();
+}
+
+function applyVis(){
+  if(!G) return;
+  const fk = S.filterOn ? Object.entries(S.filters).filter(([,v])=>v) : [];
+  const has = {};
+  G.rows.forEach(r=>{
+    r.m = r.kind!=='d' || fk.every(([k,v])=>String(r.cells[k]??'').toLowerCase().includes(v.toLowerCase()));
+    if(r.kind==='d' && r.m) r.anc.forEach(a=>has[a]=1);
+  });
+  G.vis = [1];
+  G.rows.forEach((r,i)=>{
+    let vis = !r.anc.some(a=>S.collapsed.has(a));
+    if(r.kind==='d') vis = vis && r.m;
+    else if(r.kind!=='tot' && fk.length) vis = vis && !!has[r.key];
+    G.trs[i].hidden = !vis;
+    if(vis) G.vis.push(r.n);
+    if(r.kind[0]==='g'){ const t=G.trs[i].querySelector('.tg'); if(t) t.textContent = S.collapsed.has(r.key)?'+':'−'; }
+  });
+  const shown = G.rows.filter((r,i)=>r.kind==='d' && !G.trs[i].hidden).length, total = G.rows.filter(r=>r.kind==='d').length;
+  $('#stMode').textContent = fk.length ? `Filter mode: ${shown} of ${total} records found` : 'Ready';
+}
+
+function rect(){
+  if(!sel.a) return null;
+  return {r1:Math.min(sel.a.r,sel.b.r), r2:Math.max(sel.a.r,sel.b.r), c1:Math.min(sel.a.c,sel.b.c), c2:Math.max(sel.a.c,sel.b.c)};
+}
+function selCells(){
+  const R = rect(); if(!R) return [];
+  const out = [];
+  G.vis.forEach(r=>{ if(r>=R.r1 && r<=R.r2) for(let c=R.c1;c<=R.c2;c++){ const td=G.cell[r]?.[c]; if(td) out.push(td);} });
+  return out;
+}
+function paintSel(){
+  document.querySelectorAll('#xl .sel,#xl .act,#xl th.on').forEach(e=>e.classList.remove('sel','act','on'));
+  const nb=$('#namebox'), fx=$('#fx');
+  if(!G || !sel.a){ nb.value=''; fx.value=''; ['#stAvg','#stCnt','#stSum'].forEach(s=>$(s).textContent=''); return; }
+  const R = rect(), cells = selCells();
+  cells.forEach(td=>td.classList.add('sel'));
+  G.cell[sel.a.r]?.[sel.a.c]?.classList.add('act');
+  for(let c=R.c1;c<=R.c2;c++) document.querySelector(`#xl tr.letters th[data-col="${c}"]`)?.classList.add('on');
+  G.vis.forEach(r=>{ if(r>=R.r1&&r<=R.r2) document.querySelector(`#xl th.rn[data-row="${r}"]`)?.classList.add('on'); });
+  const a = `${colL(sel.a.c)}${sel.a.r}`;
+  nb.value = (R.r1===R.r2 && R.c1===R.c2) ? a : `${colL(R.c1)}${R.r1}:${colL(R.c2)}${R.r2}`;
+  const td = G.cell[sel.a.r]?.[sel.a.c];
+  fx.value = G.formulas[sel.a.r+','+sel.a.c] || (td ? td.textContent.replace(/^[−+]/,'').trim() : '');
+  const nums = cells.filter(td=>td.dataset.v!==undefined).map(td=>+td.dataset.v);
+  const cnt = cells.filter(td=>td.textContent.trim()!=='').length;
+  if(cells.length>1){
+    const sum = nums.reduce((x,y)=>x+y,0);
+    $('#stAvg').innerHTML = nums.length ? `Average: <b>${fmtN(sum/nums.length,2)}</b>` : '';
+    $('#stCnt').innerHTML = `Count: <b>${cnt}</b>`;
+    $('#stSum').innerHTML = nums.length ? `Sum: <b>${fmtN(sum,2)}</b>` : '';
+  } else ['#stAvg','#stCnt','#stSum'].forEach(s=>$(s).textContent='');
+}
+function selTSV(){
+  const R = rect(); if(!R) return '';
+  const lines = [];
+  G.vis.forEach(r=>{ if(r>=R.r1&&r<=R.r2){ const row=[]; for(let c=R.c1;c<=R.c2;c++){ const td=G.cell[r]?.[c]; row.push(td ? (td.dataset.v ?? td.textContent.replace(/^[−+]/,'').trim()) : ''); } lines.push(row.join('\t')); } });
+  return lines.join('\n');
+}
+function copyText(t){
+  if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
+  const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  return Promise.resolve();
+}
+
+/* ===================================================================
+   SIDEBAR  (product search + component "where-used" hits)
+   =================================================================== */
+function renderSide(){
+  const fams = ['All', ...new Set(PRODUCTS.map(p=>p.fam))];
+  $('#fam').innerHTML = fams.map(f=>`<span class="chip${S.fam===f?' on':''}" data-fam="${f}">${f}</span>`).join('');
+  const q = S.q.trim().toLowerCase();
+  const prods = PRODUCTS.filter(p=>(S.fam==='All'||p.fam===S.fam) &&
+     (!q || [p.code,p.name,p.fam,p.hp+' hp',p.ph].join(' ').toLowerCase().includes(q) || p.bom.some(([c])=>c.toLowerCase().includes(q))));
+  let h = `<div class="shead">Pump models (${prods.length})</div>`;
+  h += prods.map(p=>`<div class="pi${p.code===S.product&&S.sheet==='bom'?' on':''}" data-prod="${p.code}">
+      <div class="c">${hl(p.code,S.q.trim())}</div><div class="n">${hl(p.name,S.q.trim())}</div>
+      <div class="m"><span class="tag">${p.fam}</span><span class="tag">${p.hp} HP</span><span class="tag">${p.ph}</span><span>${p.bom.length} lines · ₹${fmtN(bomCost(p))}</span></div></div>`).join('')
+     || '<div class="empty">No pump matches</div>';
+  if(q.length>=2){
+    const comps = Object.values(MAT).filter(x=>(x.code+' '+x.desc+' '+x.sup).toLowerCase().includes(q)).slice(0,12);
+    if(comps.length){
+      h += `<div class="shead">Components (${comps.length})</div>`;
+      h += comps.map(x=>{ const used = PRODUCTS.filter(p=>p.bom.some(([c])=>c===x.code)).length;
+        return `<div class="ci" data-comp="${x.code}"><span class="c">${hl(x.code,S.q.trim())}</span> — ${hl(x.desc,S.q.trim())}<br><span class="u">Where-used: ${used} model${used!==1?'s':''} →</span></div>`; }).join('');
+    }
+  }
+  $('#slist').innerHTML = h;
+}
+
+/* ===================================================================
+   SHEETS
+   =================================================================== */
+function sheetBOM(work){
+  const p = prod(S.product);
+  const plan = PLANS[S.month][p.code]||0;
+  const items = p.bom.map(([code,qty])=>{ const x=MAT[code]; return {...x, qty, ext:qty*x.rate, cover:Math.floor(x.stock/qty)}; });
+  const total = items.reduce((a,b)=>a+b.ext,0);
+  items.forEach(it=>{ it.pct = it.ext/total*100; it.secL = SEC[it.sec].label;
+    it._cls = {cover: it.cover < plan ? 'bad' : it.cover < plan*1.5 ? 'warn' : 'good'}; });
+  const bySec = SECORD.map(s=>({s, v:items.filter(i=>i.sec===s).reduce((a,b)=>a+b.ext,0)})).filter(x=>x.v>0);
+  const bott = items.reduce((a,b)=>b.cover<a.cover?b:a);
+  work.innerHTML = `
+    <div class="card">
+      <div style="min-width:240px">
+        <h2>${esc(p.name)}</h2>
+        <div class="sub"><b style="font-family:Consolas,monospace">${p.code}</b> · BOM ${p.rev} · ${p.fam} · ${p.ph}</div>
+        <div class="sub">${p.spec}</div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">BOM lines</div><div class="v">${items.length}</div><div class="s">${new Set(items.map(i=>i.sub)).size} sub-assemblies</div></div>
+        <div class="kpi"><div class="k">Material cost / pump</div><div class="v">₹${fmtN(total)}</div><div class="s">at standard rate</div></div>
+        <div class="kpi"><div class="k">${monthName(S.month).split(' ')[0]} plan</div><div class="v">${fmtN(plan)}</div><div class="s">pumps</div></div>
+        <div class="kpi"><div class="k">Buildable from stock</div><div class="v ${bott.cover<plan?'bad':'good'}">${fmtN(bott.cover)}</div><div class="s" title="${esc(bott.desc)}">limit: ${bott.code}</div></div>
+      </div>
+      <div class="split">
+        <div class="k" style="font-size:11px;color:#666">Cost split by side</div>
+        <div class="bar">${bySec.map(x=>`<div title="${SEC[x.s].label}: ₹${fmtN(x.v)}" style="width:${x.v/total*100}%;background:${SEC[x.s].c}"></div>`).join('')}</div>
+        <div class="lg">${bySec.map(x=>`<span><i style="background:${SEC[x.s].c}"></i>${SEC[x.s].label} ₹${fmtN(x.v)} (${(x.v/total*100).toFixed(0)}%)</span>`).join('')}</div>
+      </div>
+    </div>
+    <div class="gridhost" id="gh"></div>`;
+  const cols = [
+    {k:'code', l:'Item Code', w:200},
+    {k:'desc', l:'Description', w:270},
+    {k:'secL', l:'Side', w:95},
+    {k:'sub',  l:'Sub-assembly', w:110},
+    {k:'uom',  l:'UOM', w:50, t:'ctr'},
+    {k:'qty',  l:'Qty / Pump', w:78, t:'num', d:2},
+    {k:'rate', l:'Std Rate ₹', w:88, t:'num', d:2},
+    {k:'ext',  l:'Ext. Cost ₹', w:100, t:'num', d:2, sum:true, f:(r,L)=>`=${L('qty')}${r}*${L('rate')}${r}`},
+    {k:'pct',  l:'% of Pump Cost', w:110, t:'num', sum:true, r:v=>`<div class="db"><div class="b" style="width:${Math.min(v,100)}%"></div><span>${v.toFixed(1)}%</span></div>`,
+                f:(r,L)=>`=${L('ext')}${r}/${L('ext')}$${G?.maxR??''}`},
+    {k:'stock',l:'Stock', w:72, t:'num'},
+    {k:'cover',l:'Pumps Coverable', w:88, t:'num', tip:'Stock ÷ Qty per pump. Red = less than this month\'s plan', f:(r,L)=>`=INT(${L('stock')}${r}/${L('qty')}${r})`},
+    {k:'mb',   l:'Make / Buy', w:64, t:'ctr'},
+    {k:'sup',  l:'Preferred Supplier', w:190},
+    {k:'lead', l:'Lead Days', w:60, t:'num'},
+  ];
+  mountGrid($('#gh'), cols, buildRows(items, S.groupBy, ['ext','pct'], 'code', `Total – ${p.code}`));
+  // fix % formula reference to the grand-total row now that row numbers are known
+  const pc = cols.findIndex(c=>c.k==='pct'), ec = colL(cols.findIndex(c=>c.k==='ext'));
+  G.rows.forEach(r=>{ if(r.kind==='d') G.formulas[r.n+','+pc] = `=${ec}${r.n}/$${ec}$${G.maxR}`; });
+}
+
+function computeMRP(){
+  const plan = PLANS[S.month], start = new Date(S.month+'-01');
+  const req = {};
+  PRODUCTS.forEach((p,pi)=>{ const q = plan[p.code]||0;
+    p.bom.forEach(([c,qty])=>{ const r = req[c] ||= {...MAT[c], gross:0}; r['p'+pi] = (r['p'+pi]||0) + q*qty; r.gross += q*qty; }); });
+  return Object.values(req).filter(r=>r.gross>0).map(r=>{
+    r.net = Math.max(0, r.gross - r.stock - r.po);
+    r.order = r.net>0 ? Math.ceil(r.net/r.moq)*r.moq : 0;
+    r.value = r.order * r.rate;
+    const ob = new Date(start); ob.setDate(ob.getDate()-r.lead); r.obD = ob;
+    r.orderBy = r.order ? ddmmm(ob) : '';
+    r.status = !r.order ? 'OK' : ob < TODAY ? 'LATE' : 'ORDER';
+    r.cov = (r.stock + r.po) / r.gross * 100;
+    r._cls = {net: r.net>0?'bad':'', cov: r.cov<100?'bad':r.cov<130?'warn':'good', orderBy: r.status==='LATE'?'bad':''};
+    return r;
+  }).sort((a,b)=>SECORD.indexOf(a.sec)-SECORD.indexOf(b.sec) || a.code.localeCompare(b.code));
+}
+
+function sheetMRP(work){
+  const plan = PLANS[S.month];
+  work.innerHTML = `
+    <div class="planwrap">
+      <div>
+        <h3>Production Plan – ${monthName(S.month)}</h3>
+        <table class="xl plan"><colgroup><col style="width:150px"><col style="width:250px"><col style="width:90px"><col style="width:110px"><col style="width:120px"></colgroup>
+          <thead><tr class="hdr"><th style="top:0">Model</th><th style="top:0">Description</th><th style="top:0" class="num">Plan Qty</th><th style="top:0" class="num">Cost / Pump ₹</th><th style="top:0" class="num">Material Value ₹</th></tr></thead>
+          <tbody>${PRODUCTS.map(p=>`<tr><td class="mono"><span class="lnk" data-prod="${p.code}">${p.code}</span></td><td>${esc(p.name)}</td>
+            <td class="inp"><input type="number" min="0" step="10" data-plan="${p.code}" value="${plan[p.code]||0}"></td>
+            <td class="num">${fmtN(bomCost(p))}</td><td class="num" id="pv-${p.code}">${fmtN(bomCost(p)*(plan[p.code]||0))}</td></tr>`).join('')}
+            <tr class="tot"><td>Total</td><td></td><td class="num" id="pt-q"></td><td></td><td class="num" id="pt-v"></td></tr>
+          </tbody></table>
+        <div class="hint">Orange cells are inputs (Excel “Input” style). Change a quantity and the requirement below recalculates.</div>
+      </div>
+      <div class="kpis" id="mrpk" style="align-self:flex-start;margin-top:22px"></div>
+    </div>
+    <div class="gridhost" id="gh"></div>`;
+  renderMRPGrid();
+}
+function renderMRPGrid(){
+  const plan = PLANS[S.month], items = computeMRP();
+  const pq = PRODUCTS.reduce((a,p)=>a+(plan[p.code]||0),0), pvv = PRODUCTS.reduce((a,p)=>a+(plan[p.code]||0)*bomCost(p),0);
+  PRODUCTS.forEach(p=>{ const e=document.getElementById('pv-'+p.code); if(e) e.textContent=fmtN(bomCost(p)*(plan[p.code]||0)); });
+  $('#pt-q').textContent = fmtN(pq); $('#pt-v').textContent = fmtN(pvv);
+  const short = items.filter(i=>i.order>0), late = items.filter(i=>i.status==='LATE'), val = short.reduce((a,b)=>a+b.value,0);
+  $('#mrpk').innerHTML = `
+    <div class="kpi"><div class="k">Items required</div><div class="v">${items.length}</div><div class="s">${fmtN(pq)} pumps planned</div></div>
+    <div class="kpi"><div class="k">Items to purchase</div><div class="v ${short.length?'bad':'good'}">${short.length}</div><div class="s">net shortage &gt; 0</div></div>
+    <div class="kpi"><div class="k">Purchase value</div><div class="v">₹${fmtN(val/1e5,2)} L</div><div class="s">rounded to MOQ</div></div>
+    <div class="kpi"><div class="k">Already late to order</div><div class="v ${late.length?'bad':'good'}">${late.length}</div><div class="s">order-by date passed</div></div>`;
+  const pcols = PRODUCTS.map((p,i)=>({k:'p'+i, l:p.code.replace(/-/g,'-<wbr>'), w:84, t:'num', d:1, sum:true, tip:`Plan ${p.code} × qty per pump`}));
+  const cols = [
+    {k:'code', l:'Item Code', w:200},
+    {k:'desc', l:'Description', w:240},
+    {k:'uom',  l:'UOM', w:48, t:'ctr'},
+    ...pcols,
+    {k:'gross',l:'Gross Req.', w:86, t:'num', d:1, sum:true},
+    {k:'stock',l:'Stock', w:70, t:'num'},
+    {k:'po',   l:'Open PO', w:70, t:'num'},
+    {k:'cov',  l:'Coverage %', w:84, t:'num', tip:'(Stock + Open PO) ÷ Gross', r:v=>v==null?'':fmtN(v,0)+'%'},
+    {k:'net',  l:'Net Shortage', w:84, t:'num', d:1, sum:true},
+    {k:'moq',  l:'MOQ', w:56, t:'num'},
+    {k:'order',l:'Order Qty', w:76, t:'num', sum:true},
+    {k:'rate', l:'Rate ₹', w:76, t:'num', d:2},
+    {k:'value',l:'Order Value ₹', w:104, t:'num', sum:true},
+    {k:'lead', l:'Lead Days', w:56, t:'num'},
+    {k:'orderBy', l:'Order By', w:68, t:'ctr'},
+    {k:'status', l:'Status', w:72, t:'ctr', r:v=>v?`<span class="pill ${v.toLowerCase()}">${v}</span>`:''},
+    {k:'sup',  l:'Supplier', w:190},
+  ];
+  // formulas
+  const fP = PRODUCTS.map((p,i)=>i);
+  cols.find(c=>c.k==='gross').f = (r,L)=>`=SUM(${L('p0')}${r}:${L('p'+(PRODUCTS.length-1))}${r})`;
+  PRODUCTS.forEach((p,i)=>{ cols.find(c=>c.k==='p'+i).f = (r)=>`='Production Plan'!${p.code} * BOM('${p.code}', A${r})`; });
+  cols.find(c=>c.k==='cov').f = (r,L)=>`=(${L('stock')}${r}+${L('po')}${r})/${L('gross')}${r}`;
+  cols.find(c=>c.k==='net').f = (r,L)=>`=MAX(0,${L('gross')}${r}-${L('stock')}${r}-${L('po')}${r})`;
+  cols.find(c=>c.k==='order').f = (r,L)=>`=IF(${L('net')}${r}>0,CEILING(${L('net')}${r},${L('moq')}${r}),0)`;
+  cols.find(c=>c.k==='value').f = (r,L)=>`=${L('order')}${r}*${L('rate')}${r}`;
+  cols.find(c=>c.k==='orderBy').f = (r,L)=>`=DATE(${S.month.slice(0,4)},${+S.month.slice(5)},1)-${L('lead')}${r}`;
+  mountGrid($('#gh'), cols, buildRows(items, S.groupBy, ['gross','net','order','value',...pcols.map(c=>c.k)], 'code', `Total requirement – ${monthName(S.month)}`));
+}
+
+function sheetWhere(work){
+  const x = MAT[S.comp], plan = PLANS[S.month];
+  const opts = Object.values(MAT).map(o=>`<option value="${o.code}"${o.code===S.comp?' selected':''}>${o.code} — ${esc(o.desc)}</option>`).join('');
+  const items = PRODUCTS.filter(p=>p.bom.some(([c])=>c===x.code)).map(p=>{
+    const qty = p.bom.filter(([c])=>c===x.code).reduce((a,[,q])=>a+q,0), pl = plan[p.code]||0;
+    return {code:p.code, desc:p.name, fam:p.fam, sec:x.sec, sub:x.sub, sup:x.sup, qty, plan:pl, dem:qty*pl, val:qty*pl*x.rate};
+  });
+  const dem = items.reduce((a,b)=>a+b.dem,0);
+  work.innerHTML = `
+    <div class="card">
+      <div style="min-width:280px">
+        <div class="sub" style="margin:0 0 4px">Where-used for component</div>
+        <select class="rsel" id="compSel" style="max-width:420px">${opts}</select>
+        <div class="sub" style="margin-top:6px"><span style="color:${SEC[x.sec].c};font-weight:600">${SEC[x.sec].label}</span> › ${x.sub} · ${x.uom} · ${x.mb} · ${esc(x.sup)}</div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">Used in</div><div class="v">${items.length}</div><div class="s">pump models</div></div>
+        <div class="kpi"><div class="k">${monthName(S.month).split(' ')[0]} demand</div><div class="v">${fmtN(dem,1)}</div><div class="s">${x.uom}</div></div>
+        <div class="kpi"><div class="k">Stock + Open PO</div><div class="v ${x.stock+x.po<dem?'bad':'good'}">${fmtN(x.stock+x.po)}</div><div class="s">${fmtN(x.stock)} + ${fmtN(x.po)}</div></div>
+        <div class="kpi"><div class="k">Std rate</div><div class="v">₹${fmtN(x.rate,2)}</div><div class="s">MOQ ${fmtN(x.moq)} · ${x.lead} d lead</div></div>
+      </div>
+    </div>
+    <div class="gridhost" id="gh"></div>`;
+  const cols = [
+    {k:'code', l:'Pump Model', w:200, r:v=>`<span class="lnk" data-prod="${v}">${v}</span>`},
+    {k:'desc', l:'Description', w:280},
+    {k:'fam',  l:'Family', w:100},
+    {k:'qty',  l:`Qty / Pump (${x.uom})`, w:100, t:'num', d:2},
+    {k:'plan', l:'Plan Qty', w:80, t:'num', sum:true},
+    {k:'dem',  l:'Monthly Demand', w:110, t:'num', d:1, sum:true, f:(r,L)=>`=${L('qty')}${r}*${L('plan')}${r}`},
+    {k:'val',  l:'Demand Value ₹', w:120, t:'num', sum:true, f:(r,L)=>`=${L('dem')}${r}*${x.rate}`},
+  ];
+  mountGrid($('#gh'), cols, buildRows(items, 'flat', ['plan','dem','val'], 'code', 'Total'));
+}
+
+function sheetMaster(work){
+  const items = Object.values(MAT).map(x=>({...x, secL:SEC[x.sec].label, used:PRODUCTS.filter(p=>p.bom.some(([c])=>c===x.code)).length,
+     sval:x.stock*x.rate, _cls:{used: PRODUCTS.some(p=>p.bom.some(([c])=>c===x.code))?'':'warn'}}));
+  work.innerHTML = `<div class="gridhost" id="gh"></div>`;
+  const cols = [
+    {k:'code', l:'Item Code', w:200, r:v=>`<span class="lnk" data-comp="${v}">${v}</span>`},
+    {k:'desc', l:'Description', w:280},
+    {k:'secL', l:'Side', w:110},
+    {k:'sub',  l:'Sub-assembly', w:110},
+    {k:'uom',  l:'UOM', w:50, t:'ctr'},
+    {k:'mb',   l:'Make / Buy', w:64, t:'ctr'},
+    {k:'rate', l:'Std Rate ₹', w:88, t:'num', d:2},
+    {k:'stock',l:'Stock', w:72, t:'num'},
+    {k:'sval', l:'Stock Value ₹', w:104, t:'num', sum:true, f:(r,L)=>`=${L('stock')}${r}*${L('rate')}${r}`},
+    {k:'po',   l:'Open PO', w:72, t:'num'},
+    {k:'moq',  l:'MOQ', w:60, t:'num'},
+    {k:'lead', l:'Lead Days', w:60, t:'num'},
+    {k:'sup',  l:'Preferred Supplier', w:190},
+    {k:'used', l:'Used in Models', w:70, t:'num', f:(r,L)=>`=COUNTIF(BOM!B:B,${L('code')}${r})`},
+  ];
+  mountGrid($('#gh'), cols, buildRows(items, S.groupBy, ['sval'], 'code', 'Total stock value'));
+}
+
+/* ===================================================================
+   RENDER & EVENTS
+   =================================================================== */
+const SHEETS = [
+  {id:'bom',    name:()=>`BOM – ${S.product}`, fn:sheetBOM},
+  {id:'mrp',    name:()=>`Monthly Requirement`, fn:sheetMRP},
+  {id:'where',  name:()=>`Where-Used`, fn:sheetWhere},
+  {id:'master', name:()=>`Material Master`, fn:sheetMaster},
+];
+function render(){
+  const sh = SHEETS.find(s=>s.id===S.sheet);
+  sh.fn($('#work'));
+  $('#tabs').innerHTML = `<span class="nav">◀ ▶</span>` + SHEETS.map(s=>`<div class="tab${s.id===S.sheet?' on':''}" data-sheet="${s.id}">${esc(s.name())}</div>`).join('') + `<div class="tab add" title="Prototype">＋</div>`;
+  $('#crumb').textContent = `› ${sh.name()} · ${monthName(S.month)}`;
+  $('#btnFilter').classList.toggle('on', S.filterOn);
+  $('#btnFreeze').classList.toggle('on', S.freeze);
+  $('#groupBy').value = S.groupBy;
+  renderSide();
+}
+function go(sheet, extra={}){ Object.assign(S, extra); S.sheet = sheet; S.collapsed.clear(); render(); }
+
+// ribbon init
+$('#month').innerHTML = Object.keys(PLANS).map(k=>`<option value="${k}">${monthName(k)}</option>`).join('');
+$('#month').onchange = e=>{ S.month = e.target.value; render(); };
+$('#groupBy').onchange = e=>{ S.groupBy = e.target.value; S.collapsed.clear(); render(); };
+$('#zoom').onchange = e=>{ S.zoom = +e.target.value; $('#stZoom').textContent = S.zoom+'%'; const gh=$('#gh'); if(gh) gh.style.zoom = S.zoom/100; };
+$('#q').oninput = e=>{ S.q = e.target.value; renderSide(); };
+$('#q').onkeydown = e=>{ if(e.key==='Enter'){ const f=$('#slist [data-prod],#slist [data-comp]'); f?.click(); } if(e.key==='Escape'){ e.target.value=''; S.q=''; renderSide(); } };
+
+function setLevel(l){
+  S.collapsed.clear();
+  G?.rows.forEach(r=>{ if(l===1 && r.kind==='g1') S.collapsed.add(r.key); if(l===2 && r.kind==='g2') S.collapsed.add(r.key); });
+  applyVis(); paintSel();
+}
+function exportCSV(){
+  if(!G) return;
+  const vis = new Set(G.vis), lines = [G.cols.map(c=>`"${c.l.replace(/<[^>]+>/g,"")}"`).join(',')];
+  G.rows.forEach(r=>{ if(!vis.has(r.n)) return;
+    lines.push(G.cols.map((c,i)=>{ const td=G.cell[r.n]?.[i]; let v = td ? (td.dataset.v ?? td.textContent.replace(/^[−+]/,'').replace(/\(\d+ items\)$/,'').trim()) : '';
+      return /^-?\d+(\.\d+)?$/.test(v) ? v : `"${String(v).replace(/"/g,'""')}"`; }).join(',')); });
+  const name = (S.sheet==='bom'?`BOM_${S.product}`:S.sheet==='mrp'?`Requirement_${S.month}`:S.sheet==='where'?`WhereUsed_${S.comp}`:'MaterialMaster')+'.csv';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv'})); a.download = name; a.click();
+  toast(`Exported ${name} – opens directly in Excel`);
+}
+
+document.addEventListener('click', e=>{
+  const t = e.target;
+  const tg = t.closest('[data-tg]');
+  if(tg){ const k=tg.dataset.tg; S.collapsed.has(k)?S.collapsed.delete(k):S.collapsed.add(k); applyVis(); paintSel(); return; }
+  const pr = t.closest('[data-prod]'); if(pr){ go('bom',{product:pr.dataset.prod}); return; }
+  const cp = t.closest('[data-comp]'); if(cp){ go('where',{comp:cp.dataset.comp}); return; }
+  const fm = t.closest('[data-fam]'); if(fm){ S.fam = fm.dataset.fam; renderSide(); return; }
+  const tb = t.closest('[data-sheet]'); if(tb){ go(tb.dataset.sheet); return; }
+  const lt = t.closest('#xl tr.letters th[data-col]');
+  if(lt && G){ const c=+lt.dataset.col; sel.a={r:1,c}; sel.b={r:G.maxR,c}; paintSel(); return; }
+  const b = t.closest('[data-act]'); if(!b) return;
+  switch(b.dataset.act){
+    case 'copy': if(sel.a) copyText(selTSV()).then(()=>toast('Copied – paste into Excel with Ctrl+V')); else toast('Select some cells first'); break;
+    case 'csv': exportCSV(); break;
+    case 'print': window.print(); break;
+    case 'lvl': setLevel(+b.dataset.l); break;
+    case 'filter': S.filterOn = !S.filterOn; render(); break;
+    case 'clearf': S.filters = {}; render(); break;
+    case 'freeze': S.freeze = !S.freeze; $('#xl')?.classList.toggle('frz', S.freeze); b.classList.toggle('on', S.freeze); break;
+    case 'explode': go('mrp'); break;
+    case 'pr': { const it = computeMRP().filter(i=>i.order>0); const v = it.reduce((a,b)=>a+b.value,0);
+      const sups = new Set(it.map(i=>i.sup)).size;
+      toast(`Prototype: would create PR – ${it.length} items, ${sups} suppliers, ₹${fmtN(v)}`); break; }
+  }
+});
+document.addEventListener('change', e=>{ if(e.target.id==='compSel') go('where',{comp:e.target.value}); });
+document.addEventListener('input', e=>{
+  const t = e.target;
+  if(t.dataset.fk!==undefined){ S.filters[t.dataset.fk] = t.value; applyVis(); paintSel(); }
+  if(t.dataset.plan){ PLANS[S.month][t.dataset.plan] = Math.max(0, +t.value||0); renderMRPGrid(); }
+});
+// cell selection (mouse)
+document.addEventListener('mousedown', e=>{
+  const td = e.target.closest('#xl td[data-r], #xl th.h[data-r]');
+  if(!td || e.target.closest('.tg,.lnk,input')) return;
+  const p = {r:+td.dataset.r, c:+td.dataset.c};
+  if(e.shiftKey && sel.a) sel.b = p; else { sel.a = p; sel.b = p; }
+  sel.drag = true; paintSel(); e.preventDefault();
+});
+document.addEventListener('mouseover', e=>{
+  if(!sel.drag) return; const td = e.target.closest('#xl td[data-r], #xl th.h[data-r]');
+  if(td){ sel.b = {r:+td.dataset.r, c:+td.dataset.c}; paintSel(); }
+});
+document.addEventListener('mouseup', ()=>sel.drag=false);
+document.addEventListener('dblclick', e=>{
+  const td = e.target.closest('#xl td[data-r]'); if(!td || !G) return;
+  const row = G.rows.find(r=>r.n===+td.dataset.r);
+  if(row?.kind==='d' && MAT[row.cells.code]) go('where',{comp:row.cells.code});
+});
+// keyboard
+document.addEventListener('keydown', e=>{
+  const inInput = /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
+  if(e.key==='/' && !inInput){ e.preventDefault(); $('#q').focus(); $('#q').select(); return; }
+  if(e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='l'){ e.preventDefault(); S.filterOn=!S.filterOn; render(); return; }
+  if(inInput || !G || !sel.a) return;
+  if(e.ctrlKey && e.key.toLowerCase()==='c'){ e.preventDefault(); copyText(selTSV()).then(()=>toast('Copied – paste into Excel with Ctrl+V')); return; }
+  if(e.ctrlKey && e.key.toLowerCase()==='a'){ e.preventDefault(); sel.a={r:1,c:0}; sel.b={r:G.maxR,c:G.cols.length-1}; paintSel(); return; }
+  const mv = {ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1],Enter:[1,0],Tab:[0,1]}[e.key];
+  if(!mv) return; e.preventDefault();
+  const cur = e.shiftKey && e.key.startsWith('Arrow') ? sel.b : sel.a;
+  let vi = G.vis.indexOf(cur.r); if(vi<0) vi=0;
+  const nr = G.vis[Math.max(0, Math.min(G.vis.length-1, vi+mv[0]))];
+  const nc = Math.max(0, Math.min(G.cols.length-1, cur.c+mv[1]));
+  if(e.shiftKey && e.key.startsWith('Arrow')) sel.b = {r:nr,c:nc}; else sel.a = sel.b = {r:nr,c:nc};
+  paintSel();
+  (G.cell[sel.b.r]?.[sel.b.c])?.scrollIntoView({block:'nearest',inline:'nearest'});
+});
+
+// deep links: #bom/MBP-5HP-3PH, #mrp, #where/M-CAP-36, #master  (bookmarkable on the office LAN)
+(function(){ const [sh,arg] = decodeURIComponent(location.hash.slice(1)).split('/');
+  if(SHEETS.some(s=>s.id===sh)) S.sheet = sh;
+  if(sh==='bom' && prod(arg)) S.product = arg;
+  if(sh==='where' && MAT[arg]) S.comp = arg; })();
+render();
+// start with a cell selected so the fx bar demonstrates formulas
+(function(){ const r = G.rows.find(r=>r.kind==='d'); if(r){ sel.a = sel.b = {r:r.n, c:Math.max(0,G.cols.findIndex(c=>c.k==='ext'))}; paintSel(); } })();
+</script>
+</body>
+</html>
