@@ -130,18 +130,62 @@ button,select,input{font:inherit;color:inherit}
 .status b{font-weight:600}
 .sb-dl{border:0;background:rgba(255,255,255,.14);color:#fff;font-size:11px;border-radius:3px;padding:1px 8px;cursor:pointer}
 .sb-dl:hover{background:rgba(255,255,255,.26)}
-.modal.dl{width:min(520px,calc(100vw - 32px))}
+.dp{background:#fff;border-radius:8px;box-shadow:0 10px 36px rgba(0,0,0,.22);width:min(500px,calc(100vw - 32px));max-height:calc(100vh - 40px);display:flex;flex-direction:column}
+.dp-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #eee;font-size:14px}
+.dp-h b{font-weight:600}
+.dp-x{border:0;background:transparent;color:#999;cursor:pointer;font-size:13px;padding:4px 6px;border-radius:4px}
+.dp-x:hover{background:#f2f2f2;color:#333}
+.dp-b{display:grid;grid-template-columns:80px 1fr;gap:12px 14px;align-items:center;padding:16px 18px;overflow:auto}
+.dp-l{font-size:12px;color:var(--mut)}
+.dp-l.dp-top{align-self:start;padding-top:3px}
+.dp-file{display:flex;border:1px solid #d0d0d0;border-radius:4px;overflow:hidden}
+.dp-file:focus-within{border-color:var(--g)}
+.dp-file input{flex:1;border:0;outline:none;padding:6px 8px;font-size:13px;min-width:0}
+.dp-file span{padding:0 8px;display:grid;place-items:center;color:#888;font-size:12px;background:#f7f7f7;border-left:1px solid #e6e6e6}
+.dp-seg{display:inline-flex;justify-self:start;border:1px solid #d0d0d0;border-radius:4px;overflow:hidden}
+.dp-seg button{border:0;background:#fff;padding:5px 14px;font-size:12px;cursor:pointer;color:#444}
+.dp-seg button+button{border-left:1px solid #d0d0d0}
+.dp-seg button.on{background:var(--g);color:#fff}
+.dp-seg button:disabled{color:#bbb;cursor:not-allowed}
+.dp-row{display:flex;gap:18px}
+.dp-chk{display:flex;align-items:center;gap:6px;font-size:12px;color:#333;cursor:pointer;min-width:0}
+.dp-chk input{accent-color:var(--g);margin:0;flex:none}
+.dp-chk span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 14px;max-height:160px;overflow:auto}
+.dp-links{display:flex;gap:14px;margin-top:8px;font-size:12px}
+.dp-links a{color:var(--g);cursor:pointer}
+.dp-links a:hover{text-decoration:underline}
+.dp-note{grid-column:1/-1;font-size:12px;color:#8a5300}
+.dp-f{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid #eee}
+.dp-f .btn{padding:5px 16px;font-size:13px}
+.switch{display:inline-flex;align-items:center;gap:7px;cursor:pointer;user-select:none;align-self:center}
+.switch input{display:none}
+.sw-track{width:30px;height:16px;border-radius:8px;background:#cfcfcf;position:relative;transition:background .15s}
+.sw-knob{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.switch input:checked+.sw-track{background:var(--g)}
+.switch input:checked+.sw-track .sw-knob{left:16px}
+.sw-label{font-size:12px;color:#444}
 .dl-row{display:flex;align-items:center;gap:14px;margin:8px 0;flex-wrap:wrap}
-.dl-row.dl-top{align-items:flex-start}
 .dl-l{width:78px;flex:none;color:var(--mut);font-size:12px}
-.dl-name{flex:1;border:1px solid #d4d4d4;border-radius:6px;padding:5px 8px;font-size:13px}
-.dl-name:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(33,115,70,.15)}
-.opt{display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer}
-.opt.dis{opacity:.45;cursor:not-allowed}
-.opt input{accent-color:var(--g);margin:0}
-.dl-cols{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;max-height:180px;overflow:auto;border:1px solid #eee;border-radius:6px;padding:8px}
-.dl-links{grid-column:1/-1;font-size:11px;color:var(--mut)}
-.dl-links a{color:var(--g);cursor:pointer}
+.modal.proj{width:min(720px,calc(100vw - 32px));max-height:calc(100vh - 60px);display:flex;flex-direction:column}
+.proj-h{display:flex;align-items:baseline;gap:12px}
+.proj-h h3{margin:0}
+.proj-list{overflow:auto;border:1px solid #eee;border-radius:6px;margin-top:8px;flex:1;min-height:120px}
+.pc{border-bottom:1px solid #f0f0f0}
+.pc:last-child{border-bottom:0}
+.pc-row{display:flex;align-items:center;gap:10px;padding:6px 10px}
+.pc-n{flex:1;font-size:13px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-n small{display:block;color:var(--mut);font-size:11px}
+.pc-a{width:110px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:#333}
+.pc-a.up{color:#9c0006;font-weight:600}.pc-a.dn{color:#006100;font-weight:600}
+.pc-head{position:sticky;top:0;background:#fafafa;border-bottom:1px solid #eee;font-size:11px;font-weight:600;color:var(--mut);z-index:1}
+.pc-head .pc-n,.pc-head .pc-a{font-size:11px;color:var(--mut)}
+.pc-sl-h{width:180px;text-align:center}
+.pc-sl{width:180px;accent-color:#999}
+.pc-sl.up{accent-color:#c0392b}.pc-sl.dn{accent-color:var(--g)}
+.pc-v{display:flex;align-items:center;gap:2px;font-size:12px;color:#666;width:74px;justify-content:flex-end}
+.pc-v input{width:56px;border:1px solid #d4d4d4;border-radius:4px;padding:2px 4px;font-size:12px;text-align:right}
+.pc-v.up input{color:#9c0006;border-color:#e6a1a8}.pc-v.dn input{color:#006100;border-color:#9cc7ae}
 .loading{padding:40px;color:var(--mut)}
 .badge{background:#ffeb9c;color:#9c5700;border-radius:9px;font-size:11px;font-weight:700;padding:0 6px;margin-left:6px}
 .seg{display:inline-flex;border:1px solid #cfcfcf;border-radius:4px;overflow:hidden;margin-left:10px;align-self:center}
@@ -308,25 +352,49 @@ function buildExport(src, o){
   if(o.scope==='sel' && rg){ ri = ri.filter(i=>i>=rg.y && i<rg.y+rg.height); ci = ci.filter(i=>i>=rg.x && i<rg.x+rg.width); }
   if(!o.groups) ri = ri.filter(i=>!['g','t'].includes(src.rows[i]?.t));
   const aoa = [];
-  if(o.header) aoa.push(ci.map(i=>src.cols[i].l));
+  if(o.header) aoa.push(ci.map(i=>src.cols[i].xl || src.cols[i].l));
   ri.forEach(r=>aoa.push(ci.map(c=>cellValue(src.getCell([c, r])))));
   return aoa;
 }
-function saveBlob(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000); }
+// Excel writer: loaded once, started as soon as the dialog opens so the click isn't delayed.
+let XLSX_P = null;
+const loadXlsx = () => XLSX_P ||= import('https://esm.sh/xlsx@0.18.5').catch(e=>{ XLSX_P = null; throw e; });
+const MIME = {xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv:'text/csv'};
+
+// Save a file: Chrome/Edge → native "Save As" dialog; otherwise a download link attached to the page.
+// Returns 'saved' | 'cancelled'.
+async function saveFile(blob, name, ext){
+  if(window.showSaveFilePicker){
+    try {
+      const fh = await window.showSaveFilePicker({suggestedName:name, types:[{description:ext.toUpperCase()+' file', accept:{[MIME[ext]]:['.'+ext]}}]});
+      const w = await fh.createWritable(); await w.write(blob); await w.close();
+      return 'saved';
+    } catch(e){
+      if(e.name==='AbortError') return 'cancelled';            // user closed the Save As dialog
+      // SecurityError (embedded frame) etc. → fall through to the download link
+    }
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; a.style.display = 'none';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);            // keep the file alive long enough for slow downloads
+  return 'saved';
+}
 async function downloadAoa(aoa, base, fmt, sheetName){
   if(fmt==='xlsx'){
-    try {
-      const XLSX = await import('https://esm.sh/xlsx@0.18.5');   // loaded only when needed
+    let XLSX = null;
+    try { XLSX = await loadXlsx(); } catch(e){ /* offline → CSV below */ }
+    if(XLSX){
       const ws = XLSX.utils.aoa_to_sheet(aoa), wb = XLSX.utils.book_new();
       ws['!cols'] = (aoa[0]||[]).map((_,i)=>({wch:Math.min(45, Math.max(8, ...aoa.map(r=>String(r[i] ?? '').length + 2)))}));
-      XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31) || 'Sheet1');
-      XLSX.writeFile(wb, base + '.xlsx');
-      return true;
-    } catch(e){ fmt = 'csv'; }                                  // offline → fall back to CSV
+      XLSX.utils.book_append_sheet(wb, ws, sheetName.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31) || 'Sheet1');
+      const out = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      return {result: await saveFile(new Blob([out], {type:MIME.xlsx}), base + '.xlsx', 'xlsx'), fmt:'xlsx'};
+    }
   }
   const esc = v => typeof v==='number' ? String(v) : /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
-  saveBlob(new Blob(['﻿' + aoa.map(r=>r.map(esc).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}), base + '.csv');
-  return fmt==='csv';
+  const blob = new Blob(['﻿' + aoa.map(r=>r.map(esc).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'});
+  return {result: await saveFile(blob, base + '.csv', 'csv'), fmt:'csv'};
 }
 function DownloadModal({label, onClose}){
   const src = CURRENT_GRID;
@@ -341,38 +409,49 @@ function DownloadModal({label, onClose}){
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
   useEffect(()=>{ const k = e=>{ if(e.key==='Escape') onClose(); }; window.addEventListener('keydown', k); return ()=>window.removeEventListener('keydown', k); }, []);
+  useEffect(()=>{ loadXlsx().catch(()=>{}); }, []);          // preload the Excel writer
   const toggleCol = i => setCols(s=>{ const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
   const nRows = src ? (scope==='sel' && hasSel ? src.sel.current.range.height : src.rows.filter(r=>groups || !['g','t'].includes(r?.t)).length) : 0;
   const go = async () => {
-    setBusy(true);
-    const ok = await downloadAoa(buildExport(src, {cols, scope, header, groups}), name.trim() || 'grid', fmt, label);
-    setBusy(false);
-    if(fmt==='xlsx' && !ok){ setNote('Excel library could not load (offline?) – downloaded as CSV instead.'); return; }
-    onClose();
+    setBusy(true); setNote('');
+    try {
+      const r = await downloadAoa(buildExport(src, {cols, scope, header, groups}), (name.trim() || 'grid').replace(/[\\/:*?"<>|]+/g, '_'), fmt, label);
+      setBusy(false);
+      if(r.result==='cancelled') return;                       // stay open, nothing saved
+      if(fmt==='xlsx' && r.fmt==='csv'){ setNote('Excel writer could not load (offline?) – saved as CSV instead.'); return; }
+      onClose();
+    } catch(e){ setBusy(false); setNote('Download failed: ' + (e.message || e)); }
   };
-  const radio = (val, cur, set, text, dis) => h('label', {className:'opt'+(dis?' dis':'')}, h('input', {type:'radio', checked:cur===val, disabled:dis, onChange:()=>set(val)}), text);
-  const check = (cur, set, text) => h('label', {className:'opt'}, h('input', {type:'checkbox', checked:cur, onChange:e=>set(e.target.checked)}), text);
+  const rg = src?.sel?.current?.range;
+  const nAll = src ? src.rows.filter(r=>groups || !['g','t'].includes(r?.t)).length : 0;
+  const nSelR = hasSel ? rg.height : 0, nSelC = hasSel ? rg.width : 0;
+  const allCols = src ? src.cols.map((c,i)=>i) : [];
+
+  const seg = (opts, cur, set) => h('div', {className:'dp-seg'},
+    opts.map(([v, t, dis])=>h('button', {key:v, className:cur===v?'on':'', disabled:dis, onClick:()=>set(v)}, t)));
+  const chk = (on, set, t) => h('label', {className:'dp-chk'}, h('input', {type:'checkbox', checked:on, onChange:e=>set(e.target.checked)}), t);
 
   return h('div', {className:'modal-bg', onMouseDown:e=>{ if(e.target===e.currentTarget) onClose(); }},
-    h('div', {className:'modal dl'},
-      h('h3', null, 'Download – ' + label),
-      !src ? h('p', null, 'This view has no grid to download.') : h(React.Fragment, null,
-        h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'File name'), h('input', {className:'dl-name', value:name, onChange:e=>setName(e.target.value)})),
-        h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'Format'),
-          radio('xlsx', fmt, setFmt, 'Excel (.xlsx)'), radio('csv', fmt, setFmt, 'CSV')),
-        h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'Rows'),
-          radio('all', scope, setScope, 'All rows shown'), radio('sel', scope, setScope, 'Selected cells only', !hasSel)),
-        h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'Include'),
-          check(header, setHeader, 'Header row'), hasGroups ? check(groups, setGroups, 'Group & total rows') : null),
-        h('div', {className:'dl-row dl-top'}, h('span', {className:'dl-l'}, 'Columns'),
-          h('div', {className:'dl-cols'},
-            src.cols.map((c,i)=>h('label', {key:i, className:'opt'}, h('input', {type:'checkbox', checked:cols.has(i), onChange:()=>toggleCol(i)}), c.l)),
-            h('div', {className:'dl-links'},
-              h('a', {onClick:()=>setCols(new Set(src.cols.map((c,i)=>i)))}, 'All'), ' · ',
-              h('a', {onClick:()=>setCols(new Set())}, 'None')))),
-        note ? h('p', {className:'bad', style:{fontSize:12, margin:'8px 0 0'}}, note) : null),
-      h('div', {className:'modal-a', style:{marginTop:14}},
-        src ? h('span', {className:'muted'}, `${nRows} row${nRows!==1?'s':''} · ${cols.size} column${cols.size!==1?'s':''}`) : null,
+    h('div', {className:'dp'},
+      h('div', {className:'dp-h'}, h('span', null, 'Download ', h('b', null, label)), h('button', {className:'dp-x', title:'Close (Esc)', onClick:onClose}, '✕')),
+      !src ? h('div', {className:'dp-b muted'}, 'This view has no grid to download.')
+      : h('div', {className:'dp-b'},
+          h('label', {className:'dp-l'}, 'File name'),
+          h('div', {className:'dp-file'}, h('input', {value:name, spellCheck:false, onChange:e=>setName(e.target.value)}), h('span', null, '.' + fmt)),
+          h('span', {className:'dp-l'}, 'Format'),
+          seg([['xlsx','Excel'], ['csv','CSV']], fmt, setFmt),
+          h('span', {className:'dp-l'}, 'Rows'),
+          seg([['all', `All rows (${nAll})`], ['sel', hasSel ? `Selection (${nSelR} × ${nSelC})` : 'Selection', !hasSel]], scope, setScope),
+          h('span', {className:'dp-l'}, 'Include'),
+          h('div', {className:'dp-row'}, chk(header, setHeader, 'Header row'), hasGroups ? chk(groups, setGroups, 'Group & total rows') : null),
+          h('span', {className:'dp-l dp-top'}, 'Columns'),
+          h('div', null,
+            h('div', {className:'dp-cols'}, src.cols.map((c,i)=>h('label', {key:i, className:'dp-chk', title:c.xl || c.l},
+              h('input', {type:'checkbox', checked:cols.has(i), onChange:()=>toggleCol(i)}), h('span', null, c.xl || c.l)))),
+            h('div', {className:'dp-links'}, h('a', {onClick:()=>setCols(new Set(allCols))}, 'Select all'), h('a', {onClick:()=>setCols(new Set())}, 'Clear'))),
+          note ? h('div', {className:'dp-note'}, note) : null),
+      h('div', {className:'dp-f'},
+        src ? h('span', {className:'muted'}, `${scope==='sel' && hasSel ? nSelR : nRows} rows · ${cols.size} columns`) : null,
         h('span', {className:'sp'}),
         h('button', {className:'btn', onClick:onClose}, 'Cancel'),
         src ? h('button', {className:'btn primary', disabled:busy || !cols.size, onClick:go}, busy ? 'Preparing…' : 'Download') : null)));
@@ -915,6 +994,177 @@ function MasterSheet(props){
   return view==='items' ? h(ItemMaster, {...props, seg}) : h(PriceList, {...props, seg});   // ItemMaster also gets openHistory
 }
 
+/* ---------- Dashboard: NRP by material, Qty and Price for every month in the From–To range ----------
+   Price = price per piece: BOM material cost of one pump, using that month's rates.
+   Projection (toggle + gear): NRP qty for a chosen period, priced at the LATEST prices adjusted by a % per commodity. */
+const monthsBetween = (from, to) => {
+  const out = []; if(!from || !to || from > to) return out;
+  let [y, m] = from.slice(0,7).split('-').map(Number); const [ey, em] = to.slice(0,7).split('-').map(Number);
+  while((y < ey || (y === ey && m <= em)) && out.length < 24){ out.push(`${y}-${String(m).padStart(2,'0')}`); if(++m > 12){ m = 1; y++; } }
+  return out;                                                // capped at 24 months
+};
+const LATEST_PM = () => PRICES.reduce((a,e)=>e.month > a ? e.month : a, '');      // latest month that has prices
+const COMMODITIES = () => [...new Set(Object.values(MAT).map(x=>x.commodity))].sort();
+const shortDay = d => d ? new Date(d+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}) : '';
+// Projection settings live for the session (survive tab switches). TODO: save per user via /api/projections
+const PROJ = (()=>{ const ds = NRP.map(r=>r.date).sort(), last = (ds[ds.length-1] || isoDay(TODAY)).slice(0,7);
+  return {on:false, from:monthStart(last), to:monthEnd(last), pct:{}}; })();
+const projRate = (code, pct) => priceFor(code, LATEST_PM()).rate * (1 + (pct[MAT[code].commodity] || 0) / 100);
+
+function Switch({on, onChange, label}){
+  return h('label', {className:'switch'},
+    h('input', {type:'checkbox', checked:on, onChange:e=>onChange(e.target.checked)}),
+    h('span', {className:'sw-track'}, h('span', {className:'sw-knob'})),
+    h('span', {className:'sw-label'}, label));
+}
+
+// One row per commodity: average latest price of its items (server: GET /api/commodities/summary?month=),
+// a slider for the % change, and the resulting projected average. No item lists – they would be too big to fetch.
+function commoditySummary(lpm){
+  const acc = {};
+  Object.values(MAT).forEach(x=>{ const a = acc[x.commodity] ||= {n:0, sum:0}; a.n++; a.sum += priceFor(x.code, lpm).rate; });
+  return Object.entries(acc).map(([c, a])=>({c, n:a.n, avg:a.n ? a.sum / a.n : 0})).sort((x,y)=>x.c.localeCompare(y.c));
+}
+function ProjectionModal({proj, onApply, onClose}){
+  const [from, setFrom] = useState(proj.from), [to, setTo] = useState(proj.to);
+  const [pct, setPct] = useState({...proj.pct});
+  const lpm = LATEST_PM();
+  const rowsC = useMemo(()=>commoditySummary(lpm), [lpm]);
+  useEffect(()=>{ const k = e=>{ if(e.key==='Escape') onClose(); }; window.addEventListener('keydown', k); return ()=>window.removeEventListener('keydown', k); }, []);
+  const setOne = (c, v) => setPct(p=>({...p, [c]: Math.max(-20, Math.min(50, Math.round((+v || 0) * 2) / 2))}));
+
+  return h('div', {className:'modal-bg', onMouseDown:e=>{ if(e.target===e.currentTarget) onClose(); }},
+    h('div', {className:'modal proj'},
+      h('div', {className:'proj-h'},
+        h('h3', null, 'Projection settings'),
+        h('span', {className:'muted'}, 'Base: latest prices (' + monthName(lpm) + ')')),
+      h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'NRP period'), h(DateRange, {from, to, setFrom, setTo})),
+      h('div', {className:'proj-list'},
+        h('div', {className:'pc-row pc-head'},
+          h('span', {className:'pc-n'}, 'Material'), h('span', {className:'pc-a'}, 'Avg price ₹'),
+          h('span', {className:'pc-sl-h'}, 'Change'), h('span', {className:'pc-v'}, '%'), h('span', {className:'pc-a'}, 'Projected avg ₹')),
+        rowsC.map(({c, n, avg})=>{
+          const v = pct[c] || 0, cls = v>0 ? 'up' : v<0 ? 'dn' : '';
+          return h('div', {key:c, className:'pc-row'},
+            h('span', {className:'pc-n', title:c}, c, h('small', null, n + ' item' + (n!==1?'s':''))),
+            h('span', {className:'pc-a'}, fmt(avg, 2)),
+            h('input', {type:'range', min:-20, max:50, step:0.5, value:v, className:'pc-sl '+cls, onChange:e=>setOne(c, e.target.value)}),
+            h('span', {className:'pc-v '+cls}, h('input', {type:'number', min:-20, max:50, step:0.5, value:v, onChange:e=>setOne(c, e.target.value)}), '%'),
+            h('span', {className:'pc-a '+cls}, fmt(avg * (1 + v/100), 2)));
+        })),
+      h('div', {className:'modal-a', style:{marginTop:12}},
+        h('button', {className:'btn', onClick:()=>setPct({})}, 'Reset all to 0%'),
+        h('span', {className:'sp'}),
+        h('button', {className:'btn', onClick:onClose}, 'Cancel'),
+        h('button', {className:'btn primary', disabled:!from || !to || from > to, onClick:()=>onApply({from, to, pct})}, 'Apply'))));
+}
+
+function DashboardSheet({onStats}){
+  const dates = NRP.map(r=>r.date).sort();
+  const [from, setFrom] = useState(monthStart((dates[0] || isoDay(TODAY)).slice(0,7)));
+  const [to, setTo] = useState(monthEnd((dates[dates.length-1] || isoDay(TODAY)).slice(0,7)));
+  const [q, setQ] = useState(['','']);
+  const [sort, setSort] = useState(null);
+  const [proj, setProjState] = useState({...PROJ});
+  const setProj = p => { Object.assign(PROJ, p); setProjState({...PROJ}); };
+  const [gear, setGear] = useState(false);
+  const months = monthsBetween(from, to);
+
+  const costCache = {};                                      // BOM cost per pump, per model+month
+  const unitCost = (p, m) => costCache[p.code+'|'+m] ??= bomCost(p, m);
+  const projCost = p => costCache[p.code+'|P'] ??= p.bom.reduce((a,[c,per])=>a + per * projRate(c, proj.pct), 0);
+  const baseCost = p => unitCost(p, LATEST_PM());
+
+  const byMat = {};
+  const rowFor = (r, p) => byMat[r.material] ||= {material:r.material, desc:p.name, model:p.code, vendorCode:p.vendorCode, vendor:p.vendor, p};
+  NRP.forEach(r=>{
+    const p = productByMaterial(r.material); if(!p) return;
+    if(inRange(r.date, from, to)){ const row = rowFor(r, p), m = r.date.slice(0,7); row['q_'+m] = (row['q_'+m] || 0) + (+r.qty || 0); }
+    if(proj.on && inRange(r.date, proj.from, proj.to)){ const row = rowFor(r, p); row.q_P = (row.q_P || 0) + (+r.qty || 0); }
+  });
+  let list = Object.values(byMat);
+  list.forEach(row=>{
+    months.forEach((m,i)=>{
+      row['v_'+m] = row['q_'+m] ? unitCost(row.p, m) : 0;
+      const prev = i ? row['v_'+months[i-1]] : 0, cur = row['v_'+m];   // change vs previous month's per-piece price
+      row['c_'+m] = i && prev && cur ? (cur - prev) / prev * 100 : null;
+    });
+    if(proj.on){                                             // projected per-piece price vs the latest actual one
+      row.v_P = row.q_P ? projCost(row.p) : 0;
+      const base = baseCost(row.p);
+      row.c_P = row.q_P && base ? (row.v_P - base) / base * 100 : null;
+    }
+  });
+  list = list.filter(r=>matchQ(q, r.material, r.desc, r.model, r.vendorCode, r.vendor));
+  list.sort(sort ? (a,b)=>{ const x=a[sort.k] ?? 0, y=b[sort.k] ?? 0; return (typeof x==='number'?x-y:String(x).localeCompare(String(y)))*sort.dir; }
+                 : (a,b)=>a.material.localeCompare(b.material));
+  const pg = 'Projection · ' + shortDay(proj.from) + ' – ' + shortDay(proj.to);
+  const cols = [
+    {k:'material', l:'Material', w:110},
+    {k:'desc', l:'Material Description', w:270},
+    {k:'vendorCode', l:'Vendor', w:80},
+    {k:'vendor', l:'Vendor Name', w:160},
+    ...months.flatMap((m,i)=>[
+      {k:'q_'+m, l:'Qty', xl:monthName(m)+' Qty', w:80, g:monthName(m)},
+      {k:'v_'+m, l:'Price ₹', xl:monthName(m)+' Price per piece', w:110, g:monthName(m), unit:true},
+      ...(i ? [{k:'c_'+m, l:'Change %', xl:monthName(m)+' Price change %', w:96, g:monthName(m), pct:true}] : [])]),
+    ...(proj.on ? [
+      {k:'q_P', l:'Qty', xl:'Projection Qty', w:80, g:pg, proj:true},
+      {k:'v_P', l:'Price ₹', xl:'Projection Price per piece', w:110, g:pg, unit:true, proj:true},
+      {k:'c_P', l:'Change %', xl:'Projection change % vs latest', w:96, g:pg, pct:true, proj:true}] : []),
+  ];
+  const FIXED = 4;                                          // Material, Description, Vendor, Vendor Name
+  // Total row: Qty = sum of qty; Price = total value = Σ(qty × price per piece), shown in crores
+  const totals = {}; cols.slice(FIXED).filter(c=>!c.pct).forEach(c=>{
+    const m = c.k.slice(2);
+    totals[c.k] = c.unit ? list.reduce((a,r)=>a+(r['q_'+m]||0)*(r[c.k]||0), 0) : list.reduce((a,r)=>a+(r[c.k]||0), 0);
+  });
+  const rows = [...list.map(r=>({t:'d', it:r})), {t:'t'}];
+  const PROJ_BG = {bgCell:'#f3f0fb'};                       // light violet tint for projection cells
+
+  const getCell = useCallback(([col,row])=>{
+    const r = rows[row], c = cols[col]; if(!r || !c) return txt('');
+    const tint = o => c.proj && !o?.themeOverride ? {...o, themeOverride:PROJ_BG} : o;
+    if(r.t==='t'){
+      if(col===0) return txt('Total');
+      if(c.pct){                                             // average of the materials' change % for this column
+        const vals = list.map(r=>r[c.k]).filter(v=>v!=null);
+        if(!vals.length) return txt('');
+        const avg = Math.round(vals.reduce((a,b)=>a+b, 0) / vals.length * 100) / 100;
+        return num(avg, 2, {displayData:'Avg ' + (avg>0?'+':'') + fmt(avg,2) + '%', themeOverride: avg>0 ? RED : avg<0 ? GREEN : undefined});
+      }
+      if(col<FIXED) return txt('');
+      if(c.unit){ const cr = Math.round(totals[c.k] / 1e6) / 10;          // total value in crores, 1 decimal
+        return num(cr, 1, {displayData:fmt(cr, 1) + ' Crs'}); }
+      return num(totals[c.k], 0);
+    }
+    if(c.pct){                                               // red = price went up, green = went down
+      const v = r.it[c.k]; if(v==null) return txt('', tint({}));
+      const r2 = Math.round(v*100)/100;
+      return num(r2, 2, tint({displayData:(r2>0?'+':'')+fmt(r2,2)+'%', themeOverride: r2>0 ? RED : r2<0 ? GREEN : undefined}));
+    }
+    if(col<FIXED) return txt(r.it[c.k]);
+    const v = r.it[c.k] || 0;
+    return num(v, c.unit ? 2 : 0, tint({displayData: v ? fmt(v, c.unit ? 2 : 0) : ''}));   // blank instead of 0 keeps the grid readable
+  }, [rows, cols]);
+
+  return h(React.Fragment, null,
+    h('div', {className:'strip head'},
+      h('div', {className:'info'}, h('div', {className:'l1'}, h('h2', null, 'Dashboard'))),
+      h('div', {className:'acts'},
+        h(Switch, {on:proj.on, onChange:on=>setProj({on}), label:'Projection'}),
+        h('button', {className:'ib', title:'Projection settings', onClick:()=>setGear(true)}, '⚙'),
+        h('span', {className:'vsep'}),
+        h(DateRange, {from, to, setFrom, setTo}),
+        h('span', {className:'vsep'}),
+        h(SearchBox, {value:q, onChange:setQ}),
+        h('span', {className:'vsep'}),
+        h('button', {className:'ib', title:'Clear sort', onClick:()=>setSort(null)}, '⇅'))),
+    h('div', {className:'gridbox'}, h(Grid, {cols, rows, getCell, sort, setSort, onStats, freeze:2})),
+    gear && h(ProjectionModal, {proj, onClose:()=>setGear(false), onApply:p=>{ setProj({...p, on:true}); setGear(false); }})
+  );
+}
+
 /* ---------- NRP: dated production requirement lines (feeds Material Planning) ---------- */
 const NRP_COLS = [
   {k:'date', l:'Date', w:120}, {k:'material', l:'Material', w:120}, {k:'desc', l:'Mat Description', w:290},
@@ -1071,7 +1321,7 @@ function ProfileMenu({me, onSwitch}){
 
 /* ---------- App shell ---------- */
 function App(){
-  const [tab, setTab] = useState(location.hash==='#mrp' ? 'mrp' : location.hash==='#nrp' ? 'nrp' : location.hash==='#changes' ? 'cr' : location.hash==='#models' ? 'models' : ['#master','#prices'].includes(location.hash) ? 'master' : 'bom');
+  const [tab, setTab] = useState(location.hash==='#dashboard' ? 'dash' : location.hash==='#mrp' ? 'mrp' : location.hash==='#nrp' ? 'nrp' : location.hash==='#changes' ? 'cr' : location.hash==='#models' ? 'models' : ['#master','#prices'].includes(location.hash) ? 'master' : 'bom');
   const [crView, setCrView] = useState('requests');
   const [hist, setHist] = useState('');
   const [leave, setLeave] = useState(null);                   // pending navigation while drafts are unsaved
@@ -1118,7 +1368,8 @@ function App(){
         h('button', {className:'tab'+(tab==='master'?' on':''), onClick:()=>goTab('master')}, 'Material Master'),
         h('button', {className:'tab'+(tab==='cr'?' on':''), onClick:()=>goTab('cr')}, 'Change Requests', nPend ? h('span', {className:'badge'}, nPend) : null),
         h('button', {className:'tab'+(tab==='nrp'?' on':''), onClick:()=>goTab('nrp')}, 'NRP'),
-        h('button', {className:'tab'+(tab==='mrp'?' on':''), onClick:()=>goTab('mrp')}, 'Material Planning')),
+        h('button', {className:'tab'+(tab==='mrp'?' on':''), onClick:()=>goTab('mrp')}, 'Material Planning'),
+        h('button', {className:'tab'+(tab==='dash'?' on':''), onClick:()=>goTab('dash')}, 'Dashboard')),
       h('div', {className:'sp'}),
       h(ProfileMenu, {me, onSwitch:id=>guard(()=>setUid(id))})
     ),
@@ -1141,6 +1392,7 @@ function App(){
       : tab==='master' ? h(MasterSheet, {ver, role, bump, onStats:setStats, openHistory, ask})
       : tab==='nrp'    ? h(NrpSheet, {ver, range, bump, onStats:setStats, ask})
       : tab==='cr'     ? h(ChangeRequestsSheet, {ver, role, bump, view:crView, setView:setCrView, hist, setHist, ask})
+      : tab==='dash'   ? h(DashboardSheet, {ver, onStats:setStats})
                        : h(MrpSheet, {ver, range, onStats:setStats}))
     ),
     confirmBox && h('div', {className:'modal-bg', onKeyDown:e=>{ if(e.key==='Escape') setConfirmBox(null); }},
@@ -1160,7 +1412,7 @@ function App(){
           h('span', {className:'sp'}),
           h('button', {className:'btn no', onClick:()=>{ discardDraft(); const f=leave; setLeave(null); bump(); f(); }}, 'Discard & leave'),
           h('button', {className:'btn primary', onClick:()=>{ saveDraft(role); const f=leave; setLeave(null); bump(); f(); }}, 'Save & leave')))),
-    dl && h(DownloadModal, {label:{bom:code ? 'BOM '+code : 'BOM', models:'Models', master:'Material Master', cr:'Change Requests', nrp:'NRP', mrp:'Material Planning'}[tab] || 'Grid', onClose:()=>setDl(false)}),
+    dl && h(DownloadModal, {label:{bom:code ? 'BOM '+code : 'BOM', models:'Models', master:'Material Master', cr:'Change Requests', nrp:'NRP', mrp:'Material Planning', dash:'Dashboard'}[tab] || 'Grid', onClose:()=>setDl(false)}),
     h('div', {className:'status'},
       h('span', null, DRAFT.size ? `${DRAFT.size} unsaved edit${DRAFT.size!==1?'s':''}` : 'Ready'), h('span', {className:'sp'}),
       stats && stats.n ? h('span', null, 'Average: ', h('b', null, fmt(stats.sum/stats.n,2))) : null,

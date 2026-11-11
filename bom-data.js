@@ -191,3 +191,22 @@ const USERS = [
   {id:'U003', name:'Priya Nair',   dept:'Production', role:'Contributor'},
   {id:'U004', name:'Store Desk',   dept:'Stores',     role:'Viewer'},
 ];
+
+/* ---------- Commodity (raw-material group) per item – used by Dashboard › Projection ---------- */
+const COMMODITY_OF = {
+  'M-STP':'Electrical Steel', 'M-CUW':'Copper', 'M-INS':'Insulation', 'M-ROT':'Aluminium', 'M-BRG':'Bearings',
+  'M-FAN':'Plastics', 'M-TBX':'Plastics', 'M-FCV':'Steel', 'M-CAP':'Electrical Components',
+  'P-MSL':'Seals & Gaskets', 'P-GKT':'Seals & Gaskets', 'P-WRG':'Bronze', 'P-FLG':'Cast Iron',
+  'P-NRV':'Stainless Steel', 'P-SUC':'Stainless Steel', 'P-PSH':'Stainless Steel', 'P-DIF':'Stainless Steel',
+  'E-ENC':'Steel', 'E-CBL':'Copper', 'E-FLC':'Copper',
+  'H-FST':'Steel', 'H-NPL':'Stainless Steel', 'H-BOX':'Packaging', 'H-MAN':'Packaging',
+};
+const COMMODITY_EXACT = {                                    // where the prefix isn't enough
+  'M-SFT-24':'Steel', 'M-SFT-28':'Stainless Steel', 'M-SFT-V4':'Stainless Steel',
+  'M-BDY-01':'Cast Iron', 'M-BDY-V4':'Stainless Steel', 'M-ESH-01':'Cast Iron',
+  'P-IMP-MB5':'Bronze', 'P-IMP-MB3':'Bronze', 'P-IMP-OW':'Cast Iron', 'P-IMP-SS4':'Stainless Steel',
+  'P-CAS-MB5':'Cast Iron', 'P-CAS-MB3':'Cast Iron', 'P-CAS-OW':'Cast Iron',
+};
+Object.values(MAT).forEach(x=>{
+  x.commodity = COMMODITY_EXACT[x.code] || COMMODITY_OF[x.code.slice(0,5)] || (x.sec==='PANEL' ? 'Electrical Components' : 'Other');
+});

@@ -1,6 +1,6 @@
 # PumpBOM – API plan & prototype review
 
-Status: draft for the backend build · based on `pump-bom-glide.html` + `bom-data.js` (staged, 12 Nov 2026)
+Status: draft for the backend build · based on `pump-bom-glide.html` + `bom-data.js` (updated 12 Nov 2026: Dashboard, commodities, projection)
 
 The prototype keeps **all data in the browser** (`bom-data.js` arrays) and filters, groups, totals and exports
 everything client-side. That is fine for ~60 items and 4 models, but not for a real item master (10k–100k items),
@@ -20,7 +20,9 @@ asks for **one page at a time**, and so that a careless search cannot scan whole
 | **Change Requests** | `CHANGES`, `ITEM_VERSIONS`, `MAT` | approve / reject / approve all | date filter, search inside request lines, version-history item picker |
 | **NRP** | `NRP`, `PRODUCTS` (description/vendor by material) | edit date/material/qty, delete lines (direct) | date-range filter, search, total |
 | **Material Planning** | `NRP` × `PRODUCTS[].bom` × `MAT` | – | full explosion (every NRP line × every BOM line) on each render, drill-down per item |
-| **Download (Ctrl+) )** | whatever rows are loaded in the grid | – | builds the file in the browser from loaded rows |
+| **Dashboard** | `NRP`, `PRODUCTS` (BOMs), `PRICES` | – | per material × month: NRP qty, BOM cost per piece at that month's rates, change % vs previous month; totals (qty, Σ qty×price in crores, average change %) |
+| **Dashboard › Projection** | `MAT[].commodity`, latest `PRICES`, `NRP` | projection settings (session only) | average latest price per commodity; projected cost per piece = Σ BOM qty × latest rate × (1 + commodity %) for every model |
+| **Download (Ctrl+) )** | whatever rows are loaded in the grid | – | builds the file in the browser from loaded rows; saves via the Save As dialog (Chrome/Edge) or a download link |
 | **Profile / roles** | `USERS`, `ROLES` | – | permission checks (`can('edit')`, `can('approve')`) |
 
 ---
@@ -68,7 +70,10 @@ models           (code PK, material UNIQUE, description, motor, pump, panel, ven
 vendors          (code PK, name)                                   -- fixes vendor code/name drift
 bom_headers      (model_code FK, rev, effective_from, status)      -- BOM revision
 bom_lines        (id PK, model_code, rev, item_code FK→materials, qty, line_no)
-materials        (code PK, item, spec, uom, make, suppliers, side, sub_assembly, make_buy, lead_days, moq, ver)
+materials        (code PK, item, spec, uom, make, suppliers, side, sub_assembly, make_buy, lead_days, moq, commodity FK→commodities, ver)
+commodities      (code PK, name, ref_uom NULL, ref_price NULL)       -- Cast Iron, Copper, Stainless Steel …; optional ₹/kg reference
+projections      (id PK, user_id FK, name, from_date, to_date, base_month, is_default, updated_at)
+projection_pcts  (projection_id FK, commodity FK, pct NUMERIC(5,1))  PK(projection_id, commodity)   -- −20.0 … +50.0
 material_versions(code, ver, snapshot JSON, approved_by, approved_at, request_id)   PK(code, ver)
 prices           (id PK, item_code, price_month DATE, rate, supplier, entered_on, entered_by, note)   -- duplicates allowed
 change_requests  (id PK, requester_id, status, revision, created_at, updated_at, decided_by, decided_at)
@@ -88,6 +93,8 @@ audit_log        (id, entity, entity_id, action, user_id, at, before JSON, after
 | change_requests | `(status, updated_at DESC)`; `(created_at)` | request list, date filter |
 | change_lines | `(request_id)`; `(item_code)`; trigram on `old_value,new_value` (optional) | request cards, search |
 | models | trigram on `code, material, description, vendor/category` | Models, BOM typeahead |
+| materials | `(commodity)` | commodity summary, projection pricing |
+| nrp_lines | `(material, plan_date)` (above) | Dashboard rows per material × month |
 
 Effective price: either a SQL view (`DISTINCT ON (item_code) … WHERE price_month <= :month ORDER BY item_code, price_month DESC, entered_on DESC, id DESC`) or a materialised `price_effective(item_code, month, rate, price_id)` refreshed when prices change.
 
@@ -206,14 +213,43 @@ Client side (to add in the app):
 
 For large plans, keep a cached result per `(from, to, nrp_version)`; invalidate when NRP or a BOM changes.
 
-### 5.7 Exports (replaces browser-side export for big grids)
+### 5.7 Dashboard
+One row per finished-goods material that has NRP qty in the range; one column group per month.
+
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/exports` | `{ view:'materials'\|'prices'\|'nrp'\|'planning'\|'models'\|'change-lines'\|'bom', filters:{…same params…}, columns:[…], include:{header, groups}, format:'xlsx'\|'csv' }` |
+| GET | `/dashboard?from=&to=&q=&q=&sort=&cursor=&limit=100` | **max 24 months** (422 otherwise). Row: `material, description, vendor_code, vendor_name, months:[{month, qty, price_per_piece, change_pct}]`. `price_per_piece` = Σ(BOM qty × effective rate for that month); `change_pct` vs the previous month in the range (null for the first month or when either month has no qty). Paged **by material** (cursor = material code) |
+| GET | `/dashboard/totals?from=&to=&q=&q=` | per month: `qty`, `value` (= Σ qty × price_per_piece, in ₹; the UI shows ÷ 1,00,00,000 → "Crs", 1 decimal), `avg_change_pct` (simple average over materials with a value) – computed over the **whole filter**, not just the loaded page |
+
+Server notes
+- Price per piece per *(model, month)* is the expensive part: compute once per request with one query (BOM lines ⋈ effective-price view for the months in range) and reuse it for every material of that model; cache keyed by `(model, month, prices_version, bom_rev)`.
+- `totals` is a separate call so the grid can show rows while totals load.
+
+### 5.8 Raw materials (commodities) & projection
+Projection prices every model from the **latest** prices, adjusted by a % per commodity, for the NRP qty of a chosen period.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/commodities/summary?month=latest` | **small, ~10–30 rows**: `[{commodity, items, avg_price, ref_uom?, ref_price?}]`. Feeds the ⚙ dialog. **No item lists** – the dialog never fetches per-item data |
+| GET | `/projections/me` | the caller's default settings: `{id, from, to, base_month, pcts:{commodity:pct}}` (empty pcts → all 0 %) |
+| PUT | `/projections/me` | save settings; validates `-20 ≤ pct ≤ 50` (step 0.5), known commodities, period ≤ 12 months; `If-Match` |
+| POST | `/dashboard/projection` | body `{from, to, base_month?, pcts:{…}, q:[…], cursor, limit}` → per material: `qty` (NRP in period), `price_per_piece` (Σ BOM qty × latest rate × (1 + pct/100)), `base_price_per_piece`, `change_pct`; plus `totals {qty, value, avg_change_pct}`. POST because pcts can be long; **read-only**, no data is written |
+| GET | `/projections` · POST `/projections` | *(later)* named scenarios ("Copper +8 %", "Budget FY27") shared between users |
+
+Guards
+- Recalculate only on **Apply** in the dialog (not on every slider move); the dialog's projected averages are computed in the browser from `avg_price × (1 + pct)`.
+- `base_month` defaults to the latest month that has prices; the response echoes it so the UI can show "Base: latest prices (January 2027)".
+- Note: `avg_price` mixes units inside a commodity (e.g. copper wire per KG and cable per MTR). It is an indicator only; add `ref_price` (₹/kg) per commodity if a true commodity price is needed.
+
+### 5.9 Exports (replaces browser-side export for big grids)
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/exports` | `{ view:'materials'\|'prices'\|'nrp'\|'planning'\|'models'\|'change-lines'\|'bom'\|'dashboard', filters:{…same params…, projection?:{from,to,pcts}}, columns:[…], include:{header, groups}, format:'xlsx'\|'csv' }` |
 | | | ≤ 50 000 rows → streams the file directly; larger → `202 { job_id }` |
 | GET | `/exports/{job_id}` · `/exports/{job_id}/file` | status + download; files kept 24 h |
 
 The Ctrl+) dialog keeps "Selected cells only" in the browser (data is already loaded); "All rows" calls `/exports`.
+Saving in the browser: use the File System Access "Save As" dialog (`showSaveFilePicker`) where available, else an `<a download>` attached to the page; keep the object URL for ≥ 60 s. For server exports, the endpoint sends `Content-Disposition: attachment; filename="…"` so a plain link works everywhere.
 
 ---
 
@@ -229,5 +265,6 @@ The Ctrl+) dialog keeps "Selected cells only" in the browser (data is already lo
 1. Auth + `/me`, users/roles, read-only Models, Materials (paged + search), BOM view with effective prices.
 2. Change requests (save, list, approve/reject with version checks) + material versions.
 3. Prices list + import; NRP list + batch save + import.
-4. Material Planning aggregation + drill-down.
-5. Server-side exports, audit log viewer, SSE for the pending badge.
+4. Material Planning aggregation + drill-down; Dashboard (rows + totals).
+5. Commodities on materials, `/commodities/summary`, projection settings + `/dashboard/projection`.
+6. Server-side exports, audit log viewer, SSE for the pending badge.
