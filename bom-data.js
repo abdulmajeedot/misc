@@ -72,19 +72,19 @@ Object.values(MAT).forEach(x=>{ const i=x.desc.indexOf(','); x.item=i<0?x.desc:x
 
 const PACKING = [['H-FST-01',1],['H-NPL-01',1],['H-BOX-L',1],['H-MAN-01',1]];
 const PRODUCTS = [
-  {code:'MBP-5HP-3PH', vendor:'Tesla Pumps', motor:'140CL Dsp', pump:'30 Stage R2', panel:'VBMR-DELTA', name:'Monoblock Pump 5 HP, 3-Phase', fam:'Monoblock', cat:'Monoblock Heavy Duty', hp:5, ph:'3Φ 415 V', spec:'Head 32 m · Flow 600 LPM · 65×50 mm', rev:'R3',
+  {code:'MBP-5HP-3PH', material:'FG100245', vendorCode:'V1001', vendor:'Tesla Pumps', motor:'140CL Dsp', pump:'30 Stage R2', panel:'VBMR-DELTA', name:'Monoblock Pump 5 HP, 3-Phase', fam:'Monoblock', cat:'Monoblock Heavy Duty', hp:5, ph:'3Φ 415 V', spec:'Head 32 m · Flow 600 LPM · 65×50 mm', rev:'R3',
    bom:[['M-STP-150',1],['M-CUW-22',4.2],['M-INS-01',1],['M-ROT-150',1],['M-SFT-28',1],['M-BRG-6306',1],['M-BRG-6205',1],['M-BDY-01',1],['M-ESH-01',2],['M-FAN-01',1],['M-FCV-01',1],['M-TBX-01',1],
         ['P-IMP-MB5',1],['P-CAS-MB5',1],['P-MSL-20',1],['P-WRG-01',1],['P-GKT-01',1],['P-FLG-50',2],
         ['E-STR-DOL',1],['E-MCB-32',1],['E-ENC-01',1],['E-VMT-01',1],['E-AMT-01',1],['E-LMP-01',1],['E-CBL-4',3],...PACKING]},
-  {code:'MBP-3HP-1PH', vendor:'Tesla Pumps', motor:'100CL Csr', pump:'MB-3 Single R1', panel:'VBMR-SP16', name:'Monoblock Pump 3 HP, 1-Phase', fam:'Monoblock', cat:'Monoblock Domestic', hp:3, ph:'1Φ 230 V', spec:'Head 28 m · Flow 400 LPM · 50×50 mm', rev:'R5',
+  {code:'MBP-3HP-1PH', material:'FG100246', vendorCode:'V1001', vendor:'Tesla Pumps', motor:'100CL Csr', pump:'MB-3 Single R1', panel:'VBMR-SP16', name:'Monoblock Pump 3 HP, 1-Phase', fam:'Monoblock', cat:'Monoblock Domestic', hp:3, ph:'1Φ 230 V', spec:'Head 28 m · Flow 400 LPM · 50×50 mm', rev:'R5',
    bom:[['M-STP-100',1],['M-CUW-24',2.8],['M-INS-01',1],['M-ROT-100',1],['M-SFT-24',1],['M-BRG-6204',1],['M-BRG-6205',1],['M-BDY-01',1],['M-ESH-01',2],['M-FAN-01',1],['M-FCV-01',1],['M-TBX-01',1],['M-CAP-36',1],
         ['P-IMP-MB3',1],['P-CAS-MB3',1],['P-MSL-20',1],['P-WRG-01',1],['P-GKT-01',1],['P-FLG-50',2],
         ['E-STR-1PH',1],['E-MCB-16',1],['E-ENC-01',1],['E-VMT-01',1],['E-AMT-01',1],['E-CBL-25',3],...PACKING]},
-  {code:'SUB-V4-1HP-1PH', vendor:'Aqua Drive Motors', motor:'V4-1H Oil Fill', pump:'12 Stage R2', panel:'CB-1PH-SD', name:'V4 Submersible 1 HP, 1-Phase, 12 stage', fam:'Submersible', cat:'V4 Jumbo Design', hp:1, ph:'1Φ 230 V', spec:'Head 90 m · Flow 60 LPM · 100 mm bore', rev:'R2',
+  {code:'SUB-V4-1HP-1PH', material:'FG200118', vendorCode:'V1002', vendor:'Aqua Drive Motors', motor:'V4-1H Oil Fill', pump:'12 Stage R2', panel:'CB-1PH-SD', name:'V4 Submersible 1 HP, 1-Phase, 12 stage', fam:'Submersible', cat:'V4 Jumbo Design', hp:1, ph:'1Φ 230 V', spec:'Head 90 m · Flow 60 LPM · 100 mm bore', rev:'R2',
    bom:[['M-STP-V4',1],['M-CUW-PVC',1.6],['M-ROT-V4',1],['M-SFT-V4',1],['M-BRG-THR',1],['M-BDY-V4',1],['M-CAP-36',1],
         ['P-IMP-SS4',12],['P-DIF-SS4',12],['P-PSH-V4',1],['P-NRV-V4',1],['P-SUC-V4',1],['P-GKT-01',1],
         ['E-CTB-1PH',1],['E-FLC-25',20],...PACKING]},
-  {code:'OWP-2HP-3PH', vendor:'Nova Pumps', motor:'100CL Dsp', pump:'OW Single R1', panel:'VBMR-DOL', name:'Openwell Submersible 2 HP, 3-Phase', fam:'Openwell', cat:'Openwell Horizontal', hp:2, ph:'3Φ 415 V', spec:'Head 24 m · Flow 350 LPM · 50 mm', rev:'R1',
+  {code:'OWP-2HP-3PH', material:'FG300057', vendorCode:'V1003', vendor:'Nova Pumps', motor:'100CL Dsp', pump:'OW Single R1', panel:'VBMR-DOL', name:'Openwell Submersible 2 HP, 3-Phase', fam:'Openwell', cat:'Openwell Horizontal', hp:2, ph:'3Φ 415 V', spec:'Head 24 m · Flow 350 LPM · 50 mm', rev:'R1',
    bom:[['M-STP-100',1],['M-CUW-PVC',2.2],['M-INS-01',1],['M-ROT-100',1],['M-SFT-24',1],['M-BRG-6204',2],['M-BDY-01',1],['M-ESH-01',2],
         ['P-IMP-OW',1],['P-CAS-OW',1],['P-MSL-20',1],['P-GKT-01',1],['P-FLG-50',1],
         ['E-CON-25',1],['E-OLR-10',1],['E-MCB-32',1],['E-ENC-01',1],['E-LMP-01',1],['E-CBL-4',10],...PACKING]},
@@ -95,3 +95,99 @@ const PLANS = {
   '2027-02':{'MBP-5HP-3PH':100,'MBP-3HP-1PH':180,'SUB-V4-1HP-1PH':400,'OWP-2HP-3PH':90},
 };
 const TODAY = new Date('2026-11-11');
+
+/* ---------- Material master extras: Make (brand) and Suppliers (primary first, then alternates) ---------- */
+const MAKES = {'M-BRG':'SKF','M-CAP':'Epcos','P-MSL':'Burgmann','E-CON':'Schneider','E-OLR':'Schneider','E-MCB':'Legrand',
+               'E-CBL':'Polycab','E-FLC':'Polycab','E-STR':'Shakti','E-CTB':'Shakti','E-VMT':'Meco','E-AMT':'Meco','M-CUW':'Hindalco','M-STP':'Tata Steel'};
+const ALT_SUP = {'M-BRG':'Ball Bearing House','M-CUW':'Shree Copper Wires','E-CBL':'Lakshmi Cables','E-FLC':'Lakshmi Cables',
+                 'P-MSL':'Flowseal Engineers','E-MCB':'Volt Traders','P-IMP':'Precision Pressings'};
+Object.values(MAT).forEach(x=>{ const p = x.code.slice(0,5);
+  x.make = x.mb==='Make' ? 'In-house' : (MAKES[p] || 'Local');
+  x.suppliers = [x.sup, ALT_SUP[p]].filter((s,i,a)=>s && a.indexOf(s)===i).join('; ');
+});
+
+/* ---------- Monthly price list ----------
+   Many rows per item are allowed (one per month, plus re-quotes inside a month).
+   Lookup for a month: latest entry IN that month (by entry date, then id); if none, latest entry of the most recent EARLIER month. */
+const PRICES = [];
+(function(){
+  let id = 0;
+  const hash = s => [...s].reduce((a,c)=>(a*31 + c.charCodeAt(0)) >>> 0, 7);
+  const add = (code, month, rate, sup, date, note='') =>
+    PRICES.push({id:++id, code, month, rate:Math.round(rate*100)/100, sup, date, by:'Purchase', note});
+  Object.values(MAT).forEach(x=>{
+    const k = hash(x.code), drift = 1 + ((k % 7) - 3) / 100;          // -3% .. +3%
+    add(x.code, '2026-11', x.rate, x.sup, '2026-10-28', 'Opening price list');
+    if(k % 4 !== 0) add(x.code, '2026-12', x.rate*drift, x.sup, '2026-11-0' + (2 + k % 5));
+    if(k % 4 !== 0 && k % 3 === 0) add(x.code, '2026-12', x.rate*drift*0.98, x.suppliers.split('; ').pop(), '2026-11-10', 'Re-quote');
+    if(/^(M-CUW|M-STP|M-ROT|P-CAS)/.test(x.code)) add(x.code, '2027-01', x.rate*drift*1.04, x.sup, '2026-11-09', 'Metal price revision');
+  });
+})();
+function priceFor(code, month){
+  let best = null;
+  for(const e of PRICES){
+    if(e.code !== code || e.month > month) continue;
+    if(!best || e.month > best.month || (e.month === best.month && (e.date > best.date || (e.date === best.date && e.id > best.id)))) best = e;
+  }
+  return best ? {rate:best.rate, entry:best, carried:best.month !== month, missing:false}
+              : {rate:0, entry:null, carried:false, missing:true};
+}
+
+/* ---------- Item versions ----------
+   Every item starts at v1. Approving a change request creates the next version (v2, v3 …) and keeps a full snapshot.
+   Price changes are NOT versioned here – they live in PRICES. */
+const VER_FIELDS = ['item','spec','uom','make','suppliers','sub','mb','lead','moq'];
+const snapshot = x => Object.fromEntries(VER_FIELDS.map(k=>[k, x[k]]));
+Object.values(MAT).forEach(x=>{ x.ver = 1; });
+const ITEM_VERSIONS = Object.values(MAT).map(x=>({code:x.code, ver:1, data:snapshot(x), approvedBy:'Initial load', approvedAt:new Date('2026-10-28T00:00'), reqId:null}));
+
+/* Only these fields create a new item version when a change request is approved.
+   Other master fields (suppliers, sub-assembly, make/buy, lead days) still need approval but keep the version. */
+const VERSIONED_FIELDS = new Set(['item','spec','uom','make']);
+
+/* ---------- Master change requests (approval flow) ----------
+   One open request per requester; it collects all their edits (any items, any fields) as lines.
+   {id, by, at, status:'Pending'|'Approved'|'Rejected', lines:[{code, field, old, new}], decidedBy, decidedAt,
+    versions:{code:{from,to}}}   // versions filled on approval for items that got a new version */
+const CHANGES = [];
+
+/* ---------- NRP: dated production requirement lines ----------
+   {id, date:'YYYY-MM-DD', material (finished-goods code from Models), qty}
+   Description / vendor come from the Models table (PRODUCTS) via the material code.
+   Material Planning totals these per model for the selected month (planFor). */
+const NRP = [];
+(function(){                                                // sample: split each month's plan into 2–3 dated lines
+  let id = 0;
+  Object.entries(PLANS).forEach(([month, plan])=>{
+    PRODUCTS.forEach((p, pi)=>{
+      const total = plan[p.code] || 0; if(!total) return;
+      const parts = pi % 2 ? [0.5, 0.5] : [0.4, 0.35, 0.25], days = pi % 2 ? [5, 19] : [3, 12, 24];
+      let left = total;
+      parts.forEach((f, i)=>{
+        const q = i === parts.length - 1 ? left : Math.round(total * f / 10) * 10; left -= q;
+        NRP.push({id:++id, date:`${month}-${String(days[i]).padStart(2,'0')}`, material:p.material, qty:q});
+      });
+    });
+  });
+})();
+const productByMaterial = m => PRODUCTS.find(p => p.material === m);
+function planFor(month){                                     // {modelCode: qty} for one month, from NRP
+  const plan = {};
+  NRP.forEach(r => { if(r.date.slice(0,7) !== month) return; const p = productByMaterial(r.material); if(p) plan[p.code] = (plan[p.code] || 0) + (+r.qty || 0); });
+  return plan;
+}
+
+/* ---------- Users & roles ----------
+   Viewer: read only · Contributor: edit + raise change requests · Admin: everything, incl. approving.
+   In the real app the logged-in user comes from the server (Windows / AD login); here you can switch in the profile menu. */
+const ROLES = {
+  Viewer:      {edit:false, approve:false},
+  Contributor: {edit:true,  approve:false},
+  Admin:       {edit:true,  approve:true},
+};
+const USERS = [
+  {id:'U001', name:'Abdul Majeed', dept:'Planning',   role:'Admin'},
+  {id:'U002', name:'Ravi Kumar',   dept:'Purchase',   role:'Contributor'},
+  {id:'U003', name:'Priya Nair',   dept:'Production', role:'Contributor'},
+  {id:'U004', name:'Store Desk',   dept:'Stores',     role:'Viewer'},
+];

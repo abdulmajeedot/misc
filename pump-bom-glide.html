@@ -7,7 +7,7 @@
 <!--
   PumpBOM – simple prototype on Glide Data Grid (canvas grid, handles 100k+ rows smoothly).
   Loads React + Glide from CDN. For an offline office server, bundle with Vite instead (see notes in chat).
-  Data comes from bom-data.js (MAT, PRODUCTS, PLANS, SEC, SECORD, TODAY).
+  Data comes from bom-data.js (MAT, PRODUCTS, NRP, PRICES, CHANGES, ITEM_VERSIONS, SEC, SECORD, TODAY).
 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@glideapps/glide-data-grid@6.0.3/dist/index.css">
 <script type="importmap">
@@ -33,21 +33,69 @@ button,select,input{font:inherit;color:inherit}
 .tab.on{background:#fff;color:var(--g);font-weight:600}
 .sp{flex:1}
 .top select{background:#fff;color:#222;border:0;border-radius:3px;padding:3px 6px}
+.prof{position:relative;display:flex;align-items:center;gap:8px;padding:3px 8px 3px 4px;border-radius:18px;cursor:pointer;user-select:none}
+.prof:hover{background:rgba(255,255,255,.12)}
+.av{width:26px;height:26px;border-radius:50%;background:#fff;color:var(--g);font-weight:700;font-size:11px;display:grid;place-items:center;flex:none}
+.av.sm{width:24px;height:24px;background:var(--gl);font-size:10px}
+.pn{display:flex;flex-direction:column;line-height:1.15}
+.pn b{font-weight:600;font-size:12px}
+.pn small{font-size:10px;opacity:.8}
+.caret{font-size:10px;opacity:.8}
+.pmenu{position:absolute;right:0;top:calc(100% + 6px);width:270px;background:#fff;color:#222;border:1px solid #e2e2e2;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px;z-index:50;cursor:default}
+.pm-h{font-size:11px;color:var(--mut);padding:6px 10px 4px}
+.pm-o{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:5px;cursor:pointer}
+.pm-o:hover{background:#f3f6f4}
+.pm-o.on{background:var(--gl)}
+.pm-n{flex:1;display:flex;flex-direction:column;font-size:12px}
+.pm-n small{color:var(--mut);font-size:11px}
+.rtag{font-size:10px;font-weight:600;border-radius:9px;padding:1px 7px}
+.rtag.Admin{background:#e8e0f7;color:#5b3a9a}.rtag.Contributor{background:#dcefe3;color:#1e6b3c}.rtag.Viewer{background:#eee;color:#666}
 .main{flex:1;display:flex;min-height:0}
 .side{width:270px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#fbfbfb}
-.side input{margin:10px;padding:6px 8px;border:1px solid #bdbdbd;border-radius:3px}
-.side input:focus{outline:2px solid var(--g);outline-offset:-1px}
+.tsearch{position:relative;align-self:center}
+.tsearch .pick-ico{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#999;font-size:14px;pointer-events:none}
+.tsearch2{display:flex;align-items:center;gap:4px;align-self:center}
+.tsearch2 .and{color:#aaa;font-size:11px}
+.tsearch input,.range .tsearch input{transition:width .15s ease;width:110px;border:1px solid #d4d4d4;border-radius:6px;padding:4px 24px 4px 26px;font-size:12px;background:#fff}
+.tsearch input:focus,.tsearch input.has{width:190px}
+.tsearch input:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(33,115,70,.15)}
+.tsearch .tsx{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#999;cursor:pointer;font-size:11px;padding:2px 4px;border-radius:3px}
+.tsearch .tsx:hover{background:#eee;color:#333}
+.head .acts{align-items:center;gap:1px}
+.head .acts .ib{width:26px;height:26px;padding:0;display:grid;place-items:center;font-size:16px;line-height:1;color:#777;border-radius:4px}
+.head .acts .ib:hover{background:#eef2ef;color:#185c37}
+.head .acts .vsep{margin:0 4px}
+.psearch{position:relative;margin:10px}
+.psearch .pick-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#999;font-size:15px;pointer-events:none}
+.psearch input{width:100%;border:1px solid #cfcfcf;border-radius:6px;padding:6px 10px 6px 28px;background:#fff}
+.psearch input:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(33,115,70,.15)}
+.psearch .ps-list{width:100%}
+.ps-o{padding:6px 10px;border-radius:5px;cursor:pointer}
+.ps-o.hi{background:var(--gl)}
+.ps-o b{font-family:Consolas,monospace;font-size:12px}
+.ps-o .pl1{display:flex;align-items:baseline;gap:6px}
+.ps-o .pv{margin-left:auto;font-size:11px;color:var(--mut)}
+.ps-tag{font-size:10px;color:var(--g);border:1px solid #9cc7ae;border-radius:8px;padding:0 5px}
+.nobom{flex:1;display:grid;place-items:center;color:#aaa;font-size:13px}
 .plist{overflow:auto;flex:1}
-.pi{padding:8px 12px;border-left:3px solid transparent;border-bottom:1px solid #eee;cursor:pointer}
+.pi{padding:8px 10px 8px 12px;border-left:3px solid transparent;border-bottom:1px solid #eee;cursor:pointer;display:flex;align-items:center;gap:8px}
+.pi-txt{flex:1;min-width:0}
+.pi{position:relative}
+.pi-btns{display:flex;gap:2px;position:absolute;right:6px;top:50%;transform:translateY(-50%);padding-left:10px;background:inherit;opacity:0;pointer-events:none;transition:opacity .12s}
+.pi:hover .pi-btns,.pi.on .pi-btns{pointer-events:auto}
+.pi:hover .pi-btns,.pi.on .pi-btns{opacity:1}
+.dot{width:22px;height:22px;border-radius:5px;border:0;padding:0;display:grid;place-items:center;font-size:13px;line-height:1;cursor:pointer;background:transparent;color:#9a9a9a}
+.dot.cmp:hover{background:#e3f4e8;color:#1e7b3c}
+.dot.cls:hover{background:#fde4e2;color:#c0392b}
 .pi:hover{background:#f0f0f0}
 .pi.on{background:var(--gl);border-left-color:var(--g)}
 .pi b{font-family:Consolas,monospace;font-size:12px}
-.pi div{color:#333;margin-top:2px}
+.pi-txt>div{color:#333;margin-top:2px}
 .pi small{color:var(--mut)}
 .work{flex:1;display:flex;flex-direction:column;min-width:0}
 .strip{display:flex;gap:20px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;flex:none}
 .strip h2{margin:0;font-size:16px;font-weight:600}
-.strip.head{padding:8px 14px;gap:12px;flex-wrap:nowrap;align-items:center}
+.strip.head{padding:5px 14px;gap:12px;flex-wrap:nowrap;align-items:center}
 .head .info{flex:1;min-width:0}
 .head .l1{display:flex;align-items:baseline;gap:8px}
 .head h2{font-size:15px;font-weight:600}
@@ -58,8 +106,11 @@ button,select,input{font:inherit;color:inherit}
 .head .acts{display:flex;gap:2px;flex:none}
 .head .acts button{border:0;background:transparent;color:var(--mut);font-size:12px;padding:3px 8px;border-radius:3px;cursor:pointer}
 .head .acts button:hover{background:#f0f0f0;color:#222}
-.pi .pl1{display:flex;align-items:baseline;gap:8px;margin:0}
-.pi .pv{margin-left:auto;font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi .pl1{display:flex;align-items:baseline;gap:6px;margin:0;min-width:0}
+.pi .pl1 b{flex:none}
+.pi .pv{font-size:11px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi .pv::before{content:"· "}
+.pi-txt>div:last-child{font-size:12px;color:#555}
 .strip .sub{color:var(--mut);font-size:12px;margin-top:2px}
 .kpi{border-left:1px solid var(--line);padding-left:14px}
 .kpi .k{font-size:11px;color:var(--mut)}
@@ -77,7 +128,85 @@ button,select,input{font:inherit;color:inherit}
 .planbox{flex:none;border-bottom:1px solid var(--line)}
 .status{display:flex;gap:22px;background:var(--g);color:#fff;font-size:12px;height:24px;align-items:center;padding:0 12px;flex:none}
 .status b{font-weight:600}
+.sb-dl{border:0;background:rgba(255,255,255,.14);color:#fff;font-size:11px;border-radius:3px;padding:1px 8px;cursor:pointer}
+.sb-dl:hover{background:rgba(255,255,255,.26)}
+.modal.dl{width:min(520px,calc(100vw - 32px))}
+.dl-row{display:flex;align-items:center;gap:14px;margin:8px 0;flex-wrap:wrap}
+.dl-row.dl-top{align-items:flex-start}
+.dl-l{width:78px;flex:none;color:var(--mut);font-size:12px}
+.dl-name{flex:1;border:1px solid #d4d4d4;border-radius:6px;padding:5px 8px;font-size:13px}
+.dl-name:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(33,115,70,.15)}
+.opt{display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer}
+.opt.dis{opacity:.45;cursor:not-allowed}
+.opt input{accent-color:var(--g);margin:0}
+.dl-cols{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px;max-height:180px;overflow:auto;border:1px solid #eee;border-radius:6px;padding:8px}
+.dl-links{grid-column:1/-1;font-size:11px;color:var(--mut)}
+.dl-links a{color:var(--g);cursor:pointer}
 .loading{padding:40px;color:var(--mut)}
+.badge{background:#ffeb9c;color:#9c5700;border-radius:9px;font-size:11px;font-weight:700;padding:0 6px;margin-left:6px}
+.seg{display:inline-flex;border:1px solid #cfcfcf;border-radius:4px;overflow:hidden;margin-left:10px;align-self:center}
+.seg button{border:0;background:#fff;padding:2px 12px;cursor:pointer;font-size:12px;color:#444}
+.seg button+button{border-left:1px solid #cfcfcf}
+.seg button.on{background:var(--g);color:#fff}
+.muted{color:var(--mut);font-size:12px}
+.pill{padding:1px 8px;border-radius:9px;font-size:11px;font-weight:600}
+.pill.Pending{background:#ffeb9c;color:#9c5700}.pill.Approved{background:#c6efce;color:#006100}.pill.Rejected{background:#ffc7ce;color:#9c0006}
+.btn{border:1px solid #cfcfcf;background:#fff;border-radius:3px;padding:2px 9px;cursor:pointer;font-size:12px;font-weight:400}
+.btn.ok{border-color:#9cc7ae;color:#185c37}.btn.no{color:#9c0006}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.crwrap{flex:1;overflow:auto;padding:0 14px 14px}
+.crt{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px}
+.crt th,.crt td{padding:5px 10px;border-bottom:1px solid #eee;text-align:left;white-space:nowrap;vertical-align:top}
+.crt>thead th{color:var(--mut);font-weight:600;background:#f5f7f5;position:sticky;top:0;z-index:1}
+.mono{font-family:Consolas,monospace}
+.old{color:#9c0006;text-decoration:line-through}
+.new{color:#006100;font-weight:600}
+.empty{padding:30px 0;color:var(--mut)}
+.cards{display:flex;flex-direction:column;gap:12px;padding:12px 0;max-width:1100px}
+.card{background:#fff;border:1px solid #e3e3e3;border-left:4px solid #ccc;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card.Pending{border-left-color:#e0b400}.card.Approved{border-left-color:#5aa874}.card.Rejected{border-left-color:#d9534f}
+.card-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:10px 14px}
+.card-t{display:flex;align-items:center;gap:8px;margin-bottom:3px;font-size:13px}
+.card-a{display:flex;gap:6px;flex:none}
+.card-a .btn{padding:4px 14px}
+.ctab{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed}
+.ctab th,.ctab td{padding:6px 14px;text-align:left;border-top:1px solid #f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctab th{color:var(--mut);font-weight:600;background:#fafafa;font-size:11px}
+.vh-bar{display:flex;gap:12px;align-items:center;padding:12px 0 4px}
+.picker{position:relative}
+.picker .pick-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:#999;font-size:15px;pointer-events:none}
+.picker input{width:300px;border:1px solid #cfcfcf;border-radius:6px;padding:6px 10px 6px 28px;font-size:13px;background:#fff}
+.picker input:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(33,115,70,.15)}
+.pick-list{position:absolute;top:calc(100% + 4px);left:0;width:460px;max-height:320px;overflow:auto;background:#fff;border:1px solid #e2e2e2;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:30;padding:4px}
+.pick-o{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;padding:6px 10px;border-radius:5px;cursor:pointer;font-size:12px}
+.pick-o.hi{background:var(--gl)}
+.pick-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-v{font-size:11px;color:var(--mut);background:#f1f1f1;border-radius:9px;padding:0 7px}
+.pick-none{padding:10px;color:var(--mut);font-size:12px}
+.btn.primary{background:var(--g);border-color:var(--g);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--gd)}
+.head .acts .btn{padding:3px 12px;font-size:12px;border:1px solid #cfcfcf;background:#fff;color:#444}
+.head .acts .btn:disabled{opacity:.45}
+.head .acts .btn.primary{background:var(--g);border-color:var(--g);color:#fff}
+.head .acts .btn.primary:hover:not(:disabled){background:var(--gd)}
+.vsep{width:1px;height:18px;background:#ddd;margin:0 6px;align-self:center}
+.unsaved{font-size:12px;color:#1e3a8a;background:#dbeafe;border-radius:9px;padding:1px 8px;align-self:center;margin-right:4px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.28);display:grid;place-items:center;z-index:100}
+.modal{background:#fff;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:18px 20px;width:min(440px,calc(100vw - 32px))}
+.modal h3{margin:0 0 6px;font-size:15px}
+.modal h3:has(+ .modal-a){margin-bottom:16px}
+.modal p{margin:0 0 16px;color:#444;line-height:1.45}
+.modal-a{display:flex;gap:8px;align-items:center}
+.modal-a .btn{padding:5px 14px;font-size:13px}
+.btn.danger{background:#c0392b;border-color:#c0392b;color:#fff}
+.btn.danger:hover{background:#a93226}
+.drange{display:flex;align-items:center;gap:5px}
+.drange input{border:1px solid #d4d4d4;border-radius:6px;padding:3px 6px;font-size:12px;background:#fff}
+.drange input:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(33,115,70,.15)}
+.msel{border:1px solid #d4d4d4;border-radius:6px;padding:3px 6px;font-size:12px;background:#fff}
+.range{display:flex;gap:6px;align-items:center;flex:none}
+.range input{border:1px solid #c8c8c8;border-radius:3px;padding:2px 6px;font-size:12px}
+.pform input{border:1px solid #c8c8c8;border-radius:3px;padding:3px 6px;font-size:12px;background:#fff}
 </style>
 </head>
 <body>
@@ -86,15 +215,35 @@ button,select,input{font:inherit;color:inherit}
 
 <script src="bom-data.js"></script>
 <script type="module">
-import React, {useState, useMemo, useCallback, useEffect} from 'react';
+import React, {useState, useMemo, useCallback, useEffect, useRef} from 'react';
 import {createRoot} from 'react-dom/client';
 import {DataEditor, GridCellKind} from '@glideapps/glide-data-grid';
 const h = React.createElement;
 
 /* ---------- helpers ---------- */
 const fmt = (v,d=0) => v==null || v==='' ? '' : Number(v).toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
-const bomCost = p => p.bom.reduce((a,[c,q])=>a+q*MAT[c].rate,0);
+const bomCost = (p, month) => p.bom.reduce((a,[c,q])=>a+q*priceFor(c,month).rate,0);   // rate from the monthly price list
 const monthName = k => new Date(k+'-01').toLocaleString('en-IN',{month:'long',year:'numeric'});
+const shortMonth = k => new Date(k+'-01').toLocaleString('en-IN',{month:'short',year:'2-digit'});
+const isoDay = d => d.toLocaleDateString('en-CA');                       // YYYY-MM-DD
+const niceDay = s => new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const CARRIED = {textDark:'#999'};
+const CUR_MONTH = isoDay(TODAY).slice(0, 7);                                 // Item Master rate + price list default
+const monthStart = m => m + '-01';
+const monthEnd = m => { const [y,mm] = m.split('-').map(Number); return isoDay(new Date(y, mm, 0)); };
+const inRange = (d, from, to) => (!from || d >= from) && (!to || d <= to);   // d, from, to: 'YYYY-MM-DD'
+function DateRange({from, to, setFrom, setTo}){
+  return h('div', {className:'drange'},
+    h('span', {className:'muted'}, 'From'), h('input', {type:'date', value:from, max:to||undefined, onChange:e=>setFrom(e.target.value)}),
+    h('span', {className:'muted'}, 'To'),   h('input', {type:'date', value:to, min:from||undefined, onChange:e=>setTo(e.target.value)}));
+}
+// NRP totals per model between two dates (inclusive)
+function planBetween(from, to){
+  const plan = {};
+  NRP.forEach(r=>{ if(!inRange(r.date, from, to)) return; const p = productByMaterial(r.material); if(p) plan[p.code] = (plan[p.code] || 0) + (+r.qty || 0); });
+  return plan;
+}                                       // rate taken from an earlier month
+const DRAFT_C = {bgCell:'#dbeafe', textDark:'#1e3a8a'};                         // unsaved edit
 const RED = {bgCell:'#ffc7ce', textDark:'#9c0006'}, AMBER = {bgCell:'#ffeb9c', textDark:'#9c5700'}, GREEN = {bgCell:'#c6efce', textDark:'#006100'};
 const INPUT = {bgCell:'#fff1e0', textDark:'#3f3f76'};
 
@@ -133,10 +282,107 @@ const rowTheme = rows => row => {
   return undefined;
 };
 
+/* Logged-in user (prototype: switchable in the profile menu). can('edit') / can('approve') come from ROLES. */
+let ME = USERS[0];
+const can = act => !!ROLES[ME.role]?.[act];
+const initials = n => n.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+/* ---------- Download the grid on the current tab (Ctrl+) or status-bar button) ----------
+   Each tab's grid registers itself here: {cols, rows, getCell, sel}. The last mounted one is the active tab's grid. */
+let CURRENT_GRID = null;
+function useExportSource(src){
+  const ref = useRef({});
+  Object.assign(ref.current, src);
+  CURRENT_GRID = ref.current;
+  useEffect(()=>()=>{ if(CURRENT_GRID===ref.current) CURRENT_GRID = null; }, []);
+}
+const cellValue = c => {
+  if(!c) return '';
+  if(c.kind===GridCellKind.Number) return typeof c.data==='number' ? c.data : '';
+  return String(c.displayData ?? c.data ?? '').replace(/^[▾▸]\s*/, '').replace(/ /g, '').replace(/\s{2,}/g, ' ').trim();
+};
+function buildExport(src, o){
+  let ci = src.cols.map((c,i)=>i).filter(i=>o.cols.has(i));
+  let ri = src.rows.map((r,i)=>i);
+  const rg = src.sel?.current?.range;
+  if(o.scope==='sel' && rg){ ri = ri.filter(i=>i>=rg.y && i<rg.y+rg.height); ci = ci.filter(i=>i>=rg.x && i<rg.x+rg.width); }
+  if(!o.groups) ri = ri.filter(i=>!['g','t'].includes(src.rows[i]?.t));
+  const aoa = [];
+  if(o.header) aoa.push(ci.map(i=>src.cols[i].l));
+  ri.forEach(r=>aoa.push(ci.map(c=>cellValue(src.getCell([c, r])))));
+  return aoa;
+}
+function saveBlob(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000); }
+async function downloadAoa(aoa, base, fmt, sheetName){
+  if(fmt==='xlsx'){
+    try {
+      const XLSX = await import('https://esm.sh/xlsx@0.18.5');   // loaded only when needed
+      const ws = XLSX.utils.aoa_to_sheet(aoa), wb = XLSX.utils.book_new();
+      ws['!cols'] = (aoa[0]||[]).map((_,i)=>({wch:Math.min(45, Math.max(8, ...aoa.map(r=>String(r[i] ?? '').length + 2)))}));
+      XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31) || 'Sheet1');
+      XLSX.writeFile(wb, base + '.xlsx');
+      return true;
+    } catch(e){ fmt = 'csv'; }                                  // offline → fall back to CSV
+  }
+  const esc = v => typeof v==='number' ? String(v) : /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+  saveBlob(new Blob(['﻿' + aoa.map(r=>r.map(esc).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}), base + '.csv');
+  return fmt==='csv';
+}
+function DownloadModal({label, onClose}){
+  const src = CURRENT_GRID;
+  const hasGroups = !!src && src.rows.some(r=>r?.t==='g' || r?.t==='t');
+  const hasSel = !!src?.sel?.current?.range && (src.sel.current.range.width * src.sel.current.range.height > 1);
+  const [name, setName] = useState(`${label.replace(/[^\w-]+/g, '_')}_${isoDay(new Date())}`);
+  const [fmt, setFmt] = useState('xlsx');
+  const [scope, setScope] = useState(hasSel ? 'sel' : 'all');
+  const [header, setHeader] = useState(true);
+  const [groups, setGroups] = useState(true);
+  const [cols, setCols] = useState(()=>new Set(src ? src.cols.map((c,i)=>i) : []));
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState('');
+  useEffect(()=>{ const k = e=>{ if(e.key==='Escape') onClose(); }; window.addEventListener('keydown', k); return ()=>window.removeEventListener('keydown', k); }, []);
+  const toggleCol = i => setCols(s=>{ const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n; });
+  const nRows = src ? (scope==='sel' && hasSel ? src.sel.current.range.height : src.rows.filter(r=>groups || !['g','t'].includes(r?.t)).length) : 0;
+  const go = async () => {
+    setBusy(true);
+    const ok = await downloadAoa(buildExport(src, {cols, scope, header, groups}), name.trim() || 'grid', fmt, label);
+    setBusy(false);
+    if(fmt==='xlsx' && !ok){ setNote('Excel library could not load (offline?) – downloaded as CSV instead.'); return; }
+    onClose();
+  };
+  const radio = (val, cur, set, text, dis) => h('label', {className:'opt'+(dis?' dis':'')}, h('input', {type:'radio', checked:cur===val, disabled:dis, onChange:()=>set(val)}), text);
+  const check = (cur, set, text) => h('label', {className:'opt'}, h('input', {type:'checkbox', checked:cur, onChange:e=>set(e.target.checked)}), text);
+
+  return h('div', {className:'modal-bg', onMouseDown:e=>{ if(e.target===e.currentTarget) onClose(); }},
+    h('div', {className:'modal dl'},
+      h('h3', null, 'Download – ' + label),
+      !src ? h('p', null, 'This view has no grid to download.') : h(React.Fragment, null,
+        h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'File name'), h('input', {className:'dl-name', value:name, onChange:e=>setName(e.target.value)})),
+        h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'Format'),
+          radio('xlsx', fmt, setFmt, 'Excel (.xlsx)'), radio('csv', fmt, setFmt, 'CSV')),
+        h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'Rows'),
+          radio('all', scope, setScope, 'All rows shown'), radio('sel', scope, setScope, 'Selected cells only', !hasSel)),
+        h('div', {className:'dl-row'}, h('span', {className:'dl-l'}, 'Include'),
+          check(header, setHeader, 'Header row'), hasGroups ? check(groups, setGroups, 'Group & total rows') : null),
+        h('div', {className:'dl-row dl-top'}, h('span', {className:'dl-l'}, 'Columns'),
+          h('div', {className:'dl-cols'},
+            src.cols.map((c,i)=>h('label', {key:i, className:'opt'}, h('input', {type:'checkbox', checked:cols.has(i), onChange:()=>toggleCol(i)}), c.l)),
+            h('div', {className:'dl-links'},
+              h('a', {onClick:()=>setCols(new Set(src.cols.map((c,i)=>i)))}, 'All'), ' · ',
+              h('a', {onClick:()=>setCols(new Set())}, 'None')))),
+        note ? h('p', {className:'bad', style:{fontSize:12, margin:'8px 0 0'}}, note) : null),
+      h('div', {className:'modal-a', style:{marginTop:14}},
+        src ? h('span', {className:'muted'}, `${nRows} row${nRows!==1?'s':''} · ${cols.size} column${cols.size!==1?'s':''}`) : null,
+        h('span', {className:'sp'}),
+        h('button', {className:'btn', onClick:onClose}, 'Cancel'),
+        src ? h('button', {className:'btn primary', disabled:busy || !cols.size, onClick:go}, busy ? 'Preparing…' : 'Download') : null)));
+}
+
 /* Shared grid wrapper: Excel-like defaults + selection Sum/Count/Average */
-function Grid({cols, rows, getCell, onEdit, onToggle, sort, setSort, freeze=1, height, onStats}){
+function Grid({cols, rows, getCell, onEdit, onToggle, onCell, onDelete, sort, setSort, freeze=1, height, onStats, rowThemeFn}){
   const [widths, setWidths] = useState({});
   const [sel, setSel] = useState(undefined);
+  useExportSource({cols, rows, getCell, sel});
   const [search, setSearch] = useState(false);
   const columns = useMemo(()=>cols.map(c=>({
     id:c.k, width:widths[c.k] ?? c.w, group:c.g,
@@ -160,23 +406,62 @@ function Grid({cols, rows, getCell, onEdit, onToggle, sort, setSort, freeze=1, h
   }, [getCell, onStats]);
 
   return h(DataEditor, {
-    columns, rows: rows.length, getCellContent: getCell, theme,
+    columns, rows: rows.length, theme,
+    getCellContent: can('edit') ? getCell : (cell=>({...getCell(cell), allowOverlay:false, readonly:true})),   // Viewer: no editing
     width:'100%', height: height ?? '100%',
     rowMarkers:'number', freezeColumns:freeze, smoothScrollX:true, smoothScrollY:true,
     rowHeight:26, headerHeight:34, groupHeaderHeight:24,
     getCellsForSelection:true,          // enables Ctrl+C copy (pastes into Excel as tab-separated)
-    onPaste:true,                        // paste from Excel into editable (orange) cells
+    onPaste:can('edit'),                 // paste from Excel into editable (orange) cells
     rangeSelect:'rect', columnSelect:'none', rowSelect:'multi',
     gridSelection: sel, onGridSelectionChange: onSel,
-    getRowThemeOverride: rowTheme(rows),
+    getRowThemeOverride: rowThemeFn || rowTheme(rows),
     onColumnResize: (col, w) => setWidths(p=>({...p, [col.id]:w})),
     onHeaderClicked: col => setSort && setSort(s => { const k=cols[col].k;
       return !s || s.k!==k ? {k, dir:1} : s.dir>0 ? {k, dir:-1} : null; }),
-    onCellClicked: ([col,row]) => { if(rows[row]?.t==='g' && col===0 && onToggle) onToggle(rows[row].sec); },
-    onCellEdited: onEdit,
+    onCellClicked: ([col,row]) => { if(rows[row]?.t==='g' && col===0 && onToggle) onToggle(rows[row].sec); else if(onCell) onCell([col,row]); },
+    onCellEdited: can('edit') ? onEdit : undefined,
+    ...(onDelete ? {onDelete: can('edit') ? onDelete : ()=>false} : {}),
     showSearch: search, onSearchClose: ()=>setSearch(false),
   });
 }
+
+/* Shared header search: two boxes. Inside a box "|" means OR; the two boxes are combined with AND.
+   e.g.  [ bearing | seal ]  [ motor ]  → rows containing (bearing OR seal) AND motor.
+   Ctrl+] types " | " at the cursor. Esc clears the box. */
+const SEARCH_TIP = 'Use | for OR (Ctrl+] inserts it). Both boxes must match (AND).';
+function SearchInput({value, onChange, placeholder}){
+  const key = e => {
+    if(e.key==='Escape'){ onChange(''); return; }
+    if(e.ctrlKey && (e.key===']' || e.code==='BracketRight')){
+      e.preventDefault();
+      const el = e.target, st = el.selectionStart ?? value.length, en = el.selectionEnd ?? value.length;
+      const next = value.slice(0, st) + ' | ' + value.slice(en);
+      onChange(next);
+      requestAnimationFrame(()=>{ el.selectionStart = el.selectionEnd = st + 3; });
+    }
+  };
+  return h('div', {className:'tsearch'},
+    h('span', {className:'pick-ico'}, '⌕'),
+    h('input', {value, placeholder, title:SEARCH_TIP, className:value?'has':'', onChange:e=>onChange(e.target.value), onKeyDown:key}),
+    value ? h('button', {className:'tsx', title:'Clear', onClick:()=>onChange('')}, '✕') : null);
+}
+function SearchBox({value, onChange, placeholder='Search…'}){
+  const [a, b] = value;
+  return h('div', {className:'tsearch2'},
+    h(SearchInput, {value:a, onChange:v=>onChange([v, b]), placeholder}),
+    h('span', {className:'and'}, '&'),
+    h(SearchInput, {value:b, onChange:v=>onChange([a, v]), placeholder:'and…'}));
+}
+const hasQ = q => (Array.isArray(q) ? q : [q]).some(x=>String(x).trim());
+// q: string or [box1, box2]. Each box: terms split by "|" (OR). Boxes: AND. Empty box = no filter.
+const matchQ = (q, ...vals) => {
+  const hay = vals.map(v=>String(v ?? '').toLowerCase());
+  return (Array.isArray(q) ? q : [q]).every(box=>{
+    const terms = String(box).split('|').map(t=>t.trim().toLowerCase()).filter(Boolean);
+    return !terms.length || terms.some(t=>hay.some(v=>v.includes(t)));
+  });
+};
 
 /* ---------- BOM sheet ---------- */
 const BOM_COLS = [
@@ -187,11 +472,11 @@ const BOM_COLS = [
   {k:'rate', l:'Rate ₹', w:100},
   {k:'ext',  l:'Amount ₹', w:120},
 ];
-function BomSheet({product, month, bump, onStats}){
+function BomSheet({product, month, setMonth, months, bump, onStats}){
   const [collapsed, setCollapsed] = useState(new Set());
   const [sort, setSort] = useState(null);
-  const items = product.bom.map(([code,qty], i)=>{ const m = MAT[code];
-    return {...m, qty, line:i, ext:qty*m.rate}; });
+  const items = product.bom.map(([code,qty], i)=>{ const m = MAT[code], pr = priceFor(code, month);
+    return {...m, qty, line:i, rate:pr.rate, _p:pr, ext:qty*pr.rate}; });
   const rows = groupRows(items, collapsed, sort, ['ext']);
 
   const getCell = useCallback(([col,row])=>{
@@ -205,7 +490,7 @@ function BomSheet({product, month, bump, onStats}){
     const it = r.it;
     switch(k){
       case 'qty':  return edit(it.qty, 2);
-      case 'rate': return edit(it.rate, 2);
+      case 'rate': return num(it.rate, 2, {themeOverride: it._p.missing ? RED : it._p.carried ? CARRIED : undefined});
       case 'ext':  return num(it.ext, 2);
       default: return txt(it[k]);
     }
@@ -213,9 +498,7 @@ function BomSheet({product, month, bump, onStats}){
 
   const onEdit = useCallback(([col,row], v)=>{
     const r = rows[row]; if(r?.t!=='d' || v.kind!==GridCellKind.Number || v.data==null) return;
-    const k = BOM_COLS[col].k, val = Math.max(0, v.data);
-    if(k==='qty') product.bom[r.it.line][1] = val;   // TODO: PUT /api/bom/{product}/{line}
-    if(k==='rate') MAT[r.it.code].rate = val;        // TODO: PUT /api/materials/{code}
+    if(BOM_COLS[col].k==='qty') product.bom[r.it.line][1] = Math.max(0, v.data);   // TODO: PUT /api/bom/{product}/{line}
     bump();
   }, [rows, product, bump]);
 
@@ -231,147 +514,659 @@ function BomSheet({product, month, bump, onStats}){
           [['MOTOR','Motor',product.motor], ['PUMP','Pump',product.pump], ['PANEL','Panel',product.panel]].filter(x=>x[2]).map(([s,l,v])=>
             h('span', {key:s, className:'spec', style:{'--sc':SEC[s].c}}, l + ' - ', h('b', null, v))))),
       h('div', {className:'acts'},
-        h('button', {onClick:()=>setCollapsed(new Set(SECORD))}, 'Collapse all'),
-        h('button', {onClick:()=>setCollapsed(new Set())}, 'Expand all'),
-        h('button', {onClick:()=>setSort(null)}, 'Clear sort'))
+        h('select', {className:'msel', value:month, title:'Rates for this month', onChange:e=>setMonth(e.target.value)}, months.map(k=>h('option', {key:k, value:k}, monthName(k)))),
+        h('span', {className:'vsep'}),
+        h('button', {className:'ib', title:'Collapse all', onClick:()=>setCollapsed(new Set(SECORD))}, '⊟'),
+        h('button', {className:'ib', title:'Expand all', onClick:()=>setCollapsed(new Set())}, '⊞'),
+        h('button', {className:'ib', title:'Clear sort', onClick:()=>setSort(null)}, '⇅'))
     ),
     h('div', {className:'gridbox'}, h(Grid, {cols:BOM_COLS, rows, getCell, onEdit, onToggle:toggle, sort, setSort, onStats}))
   );
 }
 
 /* ---------- Monthly requirement sheet ---------- */
-function computeReq(month){
-  const plan = PLANS[month], start = new Date(month+'-01'), req = {};
-  PRODUCTS.forEach((p,pi)=>{ const q = plan[p.code]||0;
-    p.bom.forEach(([c,qty])=>{ const r = req[c] ||= {...MAT[c], gross:0}; r['p'+pi]=(r['p'+pi]||0)+q*qty; r.gross += q*qty; }); });
-  return Object.values(req).filter(r=>r.gross>0).map(r=>{
-    r.net = Math.max(0, r.gross-r.stock-r.po);
-    r.order = r.net>0 ? Math.ceil(r.net/r.moq)*r.moq : 0;
-    r.value = r.order*r.rate;
-    const ob = new Date(start); ob.setDate(ob.getDate()-r.lead);
-    r.orderBy = r.order ? ob.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}) : '';
-    r.status = !r.order ? 'OK' : ob<TODAY ? 'LATE' : 'ORDER';
-    return r;
-  }).sort((a,b)=>a.code.localeCompare(b.code));
+// Gross requirement per item between two dates, with the models that use it (NRP totals × BOM qty).
+function computeReq(from, to){
+  const plan = planBetween(from, to), req = {};
+  PRODUCTS.forEach(p=>{ const n = plan[p.code] || 0; if(!n) return;
+    p.bom.forEach(([c, per])=>{
+      const r = req[c] ||= {...MAT[c], gross:0, uses:[]};
+      r.gross += n * per;
+      const u = r.uses.find(u=>u.model===p.code);
+      if(u){ u.per += per; u.qty += n * per; } else r.uses.push({model:p.code, p, plan:n, per, qty:n * per});
+    }); });
+  return Object.values(req).filter(r=>r.gross>0).sort((a,b)=>a.code.localeCompare(b.code));
 }
-const PLAN_COLS = [
-  {k:'code', l:'Model', w:170}, {k:'name', l:'Description', w:290}, {k:'qty', l:'Plan Qty', w:100},
-  {k:'cost', l:'Cost / Pump ₹', w:120}, {k:'val', l:'Material Value ₹', w:140},
+
+// Rows: side group → item (gross = sum) → drill-down rows for the models that use it.
+const MP_COLS = [
+  {k:'code', l:'Item Code / Model', w:220}, {k:'desc', l:'Description', w:380}, {k:'uom', l:'UOM', w:70}, {k:'gross', l:'Gross Req.', w:120},
 ];
-function MrpSheet({month, bump, onStats}){
+// Model row description: just the assembly of that side, e.g. "Motor - 100CL Csr".
+const assemblyName = (sec, p) => sec==='MOTOR' ? `Motor - ${p.motor ?? ''}` : sec==='PUMP' ? `Pump - ${p.pump ?? ''}` : sec==='PANEL' ? `Panel - ${p.panel ?? ''}` : '';
+const IND = '  ';                                   // indent for model rows
+function MrpSheet({range, onStats}){
+  const [q, setQ] = useState(['','']);
+  const [collapsed, setCollapsed] = useState(new Set());     // sides folded
+  const [open, setOpen] = useState(new Set());               // items drilled down
+  const [sort, setSort] = useState(null);
+  const items = computeReq(range.from, range.to).filter(i=>matchQ(q, i.code, i.item, i.desc, i.uom, ...i.uses.map(u=>u.model)));
+  const sorter = sort ? (a,b)=>{ const x=a[sort.k], y=b[sort.k]; return (typeof x==='number'?x-y:String(x).localeCompare(String(y)))*sort.dir; } : null;
+
+  const rows = [];
+  SECORD.forEach(sec=>{
+    let list = items.filter(i=>i.sec===sec); if(!list.length) return;
+    if(sorter) list = [...list].sort(sorter);
+    rows.push({t:'g', sec, count:list.length});
+    if(collapsed.has(sec)) return;
+    list.forEach(it=>{
+      rows.push({t:'i', it});
+      if(open.has(it.code)) it.uses.forEach(u=>rows.push({t:'m', it, u}));
+    });
+  });
+
+  const getCell = useCallback(([col,row])=>{
+    const r = rows[row], k = MP_COLS[col].k;
+    if(!r) return txt('');
+    if(r.t==='g') return col===0 ? txt(`${collapsed.has(r.sec)?'▸':'▾'}  ${SEC[r.sec].label}  (${r.count})`) : txt('');
+    if(r.t==='i'){
+      const it = r.it;
+      if(k==='code')  return txt(`${open.has(it.code)?'▾':'▸'}  ${it.code}`);
+      if(k==='desc')  return txt(it.desc);
+      if(k==='uom')   return txt(it.uom, {contentAlign:'center'});
+      return num(it.gross, 1, {themeOverride:{baseFontStyle:'600 13px'}});
+    }
+    const u = r.u;                                            // model drill-down row
+    if(k==='code')  return txt(IND + u.model);
+    if(k==='desc')  return txt(assemblyName(r.it.sec, u.p));
+    if(k==='uom')   return txt(r.it.uom, {contentAlign:'center'});
+    return num(u.qty, 1);
+  }, [rows, collapsed, open]);
+
+  const theme = useCallback(row=>{
+    const r = rows[row]; if(!r) return undefined;
+    if(r.t==='g') return {bgCell:SEC[r.sec].bg, baseFontStyle:'600 13px', textDark:SEC[r.sec].c};
+    if(r.t==='m') return {bgCell:'#fafafa', textDark:'#666'};
+    return undefined;
+  }, [rows]);
+
+  const toggleSide = sec => setCollapsed(s=>{ const n=new Set(s); n.has(sec)?n.delete(sec):n.add(sec); return n; });
+  const toggleItem = code => setOpen(s=>{ const n=new Set(s); n.has(code)?n.delete(code):n.add(code); return n; });
+
+  return h(React.Fragment, null,
+    h('div', {className:'strip head'},
+      h('div', {className:'info'}, h('div', {className:'l1'}, h('h2', null, 'Material Planning'))),
+      h('div', {className:'acts'},
+        h(DateRange, range),
+        h('span', {className:'vsep'}),
+        h(SearchBox, {value:q, onChange:setQ}),
+        h('span', {className:'vsep'}),
+        h('button', {className:'ib', title:'Collapse all', onClick:()=>{ setCollapsed(new Set()); setOpen(new Set()); }}, '⊟'),
+        h('button', {className:'ib', title:'Expand all', onClick:()=>{ setCollapsed(new Set()); setOpen(new Set(items.map(i=>i.code))); }}, '⊞'),
+        h('button', {className:'ib', title:'Clear sort', onClick:()=>setSort(null)}, '⇅'))),
+    h('div', {className:'gridbox'}, h(Grid, {cols:MP_COLS, rows, getCell, onToggle:toggleSide, sort, setSort, freeze:1, onStats, rowThemeFn:theme,
+      onCell:([col,row])=>{ if(col===0 && rows[row]?.t==='i') toggleItem(rows[row].it.code); }}))
+  );
+}
+
+/* ---------- Material Master: one row per item code; edits become change requests ---------- */
+const MASTER_FIELDS = {item:'Item', spec:'Description', uom:'UOM', make:'Make', suppliers:'Suppliers', sub:'Sub-assembly', mb:'Make/Buy', lead:'Lead Days'};
+const NUM_FIELDS = new Set(['lead']);
+const MASTER_COLS = [
+  {k:'code', l:'Item Code', w:130}, {k:'ver', l:'Ver', w:50}, {k:'item', l:'Item', w:180}, {k:'spec', l:'Description', w:220},
+  {k:'uom', l:'UOM', w:60}, {k:'make', l:'Make', w:110}, {k:'suppliers', l:'Suppliers', w:290},
+  {k:'sub', l:'Sub-assembly', w:110}, {k:'mb', l:'Make/Buy', w:80}, {k:'lead', l:'Lead Days', w:80},
+  {k:'rateNow', l:'Rate ₹', w:110}, {k:'appr', l:'Approval', w:120},
+];
+// One pending change request per requester. It collects every edit (any item, any field) until it is approved or rejected.
+const pendingReqs = () => CHANGES.filter(c=>c.status==='Pending');
+function pendingLine(code, field){
+  for(const req of pendingReqs()){ const line = req.lines.find(l=>l.code===code && l.field===field); if(line) return {req, line}; }
+  return null;
+}
+const pendingLinesFor = code => pendingReqs().flatMap(r=>r.lines.filter(l=>l.code===code));
+const bumpsVersion = lines => lines.some(l=>VERSIONED_FIELDS.has(l.field));
+
+// Approve = apply all lines. Items whose Item / Description / UOM / Make changed get the next version (once per item).
+function applyRequest(req, approver){                     // TODO: server does this in one transaction
+  req.versions = {};
+  const byItem = {};
+  req.lines.forEach(l=>(byItem[l.code] ||= []).push(l));
+  Object.entries(byItem).forEach(([code, lines])=>{
+    const x = MAT[code];
+    lines.forEach(l=>{ x[l.field] = l.new; });
+    x.desc = x.spec ? `${x.item}, ${x.spec}` : x.item;
+    x.sup = String(x.suppliers).split(';')[0].trim();
+    if(bumpsVersion(lines)){
+      req.versions[code] = {from:x.ver, to:x.ver+1};
+      x.ver += 1;
+      ITEM_VERSIONS.push({code, ver:x.ver, data:snapshot(x), approvedBy:approver, approvedAt:new Date(), reqId:req.id});
+    }
+  });
+}
+
+function Seg({value, onChange}){
+  return h('div', {className:'seg'},
+    [['items','Item Master'], ['prices','Monthly Prices']].map(([k,l])=>
+      h('button', {key:k, className:value===k?'on':'', onClick:()=>onChange(k)}, l)));
+}
+
+/* Unsaved edits (drafts). Editing a cell only lands here; Save turns them into change-request lines. */
+const DRAFT = new Map();                                     // 'code|field' → {code, field, new}
+const draftOf = (code, field) => DRAFT.get(code + '|' + field);
+// value the user currently sees as "committed": pending request value if any, else the approved master value
+const baseValue = (code, field) => { const hit = pendingLine(code, field); return hit ? hit.line.new : MAT[code][field]; };
+
+function saveDraft(role){                                    // TODO: POST /api/change-requests (one call with all lines)
+  DRAFT.forEach(({code, field, new:nv})=>{
+    const old = MAT[code][field], hit = pendingLine(code, field);
+    if(String(nv)===String(old)){                            // saved back to the approved value → drop the pending line
+      if(hit){ hit.req.lines.splice(hit.req.lines.indexOf(hit.line), 1); if(!hit.req.lines.length) CHANGES.splice(CHANGES.indexOf(hit.req), 1); }
+    } else if(hit){ hit.line.new = nv; hit.req.at = new Date(); }
+    else {
+      let req = pendingReqs().find(c=>c.by===role);
+      if(!req) CHANGES.push(req = {id:CHANGES.reduce((a,c)=>Math.max(a,c.id),0)+1, by:role, at:new Date(), status:'Pending', lines:[]});
+      req.lines.push({code, field, old, new:nv}); req.at = new Date();
+    }
+  });
+  DRAFT.clear();
+}
+const discardDraft = () => DRAFT.clear();
+
+// Warn when the browser tab is closed / reloaded with unsaved edits.
+window.addEventListener('beforeunload', e=>{ if(DRAFT.size){ e.preventDefault(); e.returnValue = ''; } });
+
+function ItemMaster({role, bump, onStats, seg, openHistory, ask}){
+  const month = CUR_MONTH;
+  const [q, setQ] = useState(['','']);
   const [collapsed, setCollapsed] = useState(new Set());
   const [sort, setSort] = useState(null);
-  const plan = PLANS[month];
-  const items = computeReq(month);
-  const pk = PRODUCTS.map((p,i)=>'p'+i);
-  const cols = useMemo(()=>[
-    {k:'code', l:'Item Code', w:180, g:'Item'}, {k:'desc', l:'Description', w:240, g:'Item'}, {k:'uom', l:'UOM', w:55, g:'Item'},
-    ...PRODUCTS.map((p,i)=>({k:'p'+i, l:p.code, w:115, g:'Requirement by model'})),
-    {k:'gross', l:'Gross Req.', w:95, g:'Netting'}, {k:'stock', l:'Stock', w:75, g:'Netting'}, {k:'po', l:'Open PO', w:75, g:'Netting'},
-    {k:'net', l:'Net Shortage', w:100, g:'Netting'},
-    {k:'moq', l:'MOQ', w:65, g:'Purchase'}, {k:'order', l:'Order Qty', w:85, g:'Purchase'}, {k:'value', l:'Order Value ₹', w:115, g:'Purchase'},
-    {k:'orderBy', l:'Order By', w:80, g:'Purchase'}, {k:'status', l:'Status', w:75, g:'Purchase'}, {k:'sup', l:'Supplier', w:200, g:'Purchase'},
-  ], []);
-  const rows = groupRows(items, collapsed, sort, ['gross','net','order','value',...pk]);
-  const short = items.filter(i=>i.order>0), late = items.filter(i=>i.status==='LATE');
+  const items = Object.values(MAT).map(x=>{ const p = priceFor(x.code, month);
+    return {...x, rateNow:p.rate, _p:p, pend:pendingLinesFor(x.code)}; });
+  const rows = groupRows(items.filter(x=>matchQ(q, x.code, x.item, x.spec, x.uom, x.make, x.suppliers, x.sub, x.mb)), collapsed, sort, []);
+  const cols = useMemo(()=>MASTER_COLS.map(c=>c.k==='rateNow' ? {...c, l:`Rate ₹ (${shortMonth(month)})`} : c), [month]);
 
   const getCell = useCallback(([col,row])=>{
     const r = rows[row], k = cols[col].k;
     if(!r) return txt('');
     if(r.t!=='d'){
-      if(col===0) return r.t==='g' ? txt(`${collapsed.has(r.sec)?'▸':'▾'}  ${SEC[r.sec].label}  (${r.count})`) : txt('Total – '+monthName(month));
-      if(k==='value') return num(r.sums.value);
-      return txt('');   // mixed UOMs: don't add KG + NOS + MTR on group rows
+      if(col===0) return r.t==='g' ? txt(`${collapsed.has(r.sec)?'▸':'▾'}  ${SEC[r.sec].label}  (${r.count})`) : txt(`${items.length} items`);
+      return txt('');
     }
     const it = r.it;
-    if(pk.includes(k)) return num(it[k]||0, 1, {displayData: it[k] ? fmt(it[k],1) : ''});
-    switch(k){
-      case 'gross': return num(it.gross, 1);
-      case 'net':   return num(it.net, 1, it.net>0 ? {themeOverride:RED} : {});
-      case 'order': return num(it.order, 0, it.order ? {themeOverride:{baseFontStyle:'600 13px'}} : {});
-      case 'value': return num(it.value);
-      case 'stock': case 'po': case 'moq': return num(it[k]);
-      case 'status':return txt(it.status, {contentAlign:'center', themeOverride: it.status==='LATE'?RED : it.status==='ORDER'?AMBER : GREEN});
-      case 'uom': case 'orderBy': return txt(it[k], {contentAlign:'center'});
-      default: return txt(it[k]);
+    if(k in MASTER_FIELDS){
+      const d = draftOf(it.code, k), hit = it.pend.find(l=>l.field===k);
+      const v = d ? d.new : hit ? hit.new : it[k], o = d ? {themeOverride:DRAFT_C} : hit ? {themeOverride:AMBER} : {};
+      return NUM_FIELDS.has(k)
+        ? {kind:GridCellKind.Number, data:v, displayData:fmt(v), allowOverlay:true, readonly:false, contentAlign:'right', ...o}
+        : {kind:GridCellKind.Text, data:String(v??''), displayData:String(v??''), allowOverlay:true, readonly:false, ...o};
     }
-  }, [rows, cols, collapsed, month]);
+    if(k==='rateNow') return num(it.rateNow, 2, {themeOverride: it._p.missing ? RED : it._p.carried ? CARRIED : undefined});
+    if(k==='ver')  return txt('v'+it.ver, {contentAlign:'center', themeOverride:{textDark:'#0563c1'}});   // click → history
+    if(k==='appr' && Object.keys(MASTER_FIELDS).some(f=>draftOf(it.code, f))) return txt('Unsaved', {themeOverride:DRAFT_C});
+    if(k==='appr') return !it.pend.length ? txt('')
+      : txt(bumpsVersion(it.pend) ? `Pending → v${it.ver+1}` : 'Pending', {themeOverride:AMBER});
+    return txt(it[k]);
+  }, [rows, cols, collapsed, items.length]);
 
-  const planRows = PRODUCTS.map(p=>({t:'d', p}));
-  const planGet = useCallback(([col,row])=>{
-    const p = PRODUCTS[row], k = PLAN_COLS[col].k, q = plan[p.code]||0;
-    if(k==='code') return txt(p.code);
-    if(k==='name') return txt(p.name);
-    if(k==='qty')  return edit(q);
-    if(k==='cost') return num(bomCost(p));
-    return num(bomCost(p)*q);
-  }, [plan, month]);
-  const planEdit = useCallback(([col,row], v)=>{
-    if(PLAN_COLS[col].k!=='qty' || v.kind!==GridCellKind.Number || v.data==null) return;
-    plan[PRODUCTS[row].code] = Math.max(0, Math.round(v.data));   // TODO: PUT /api/plan/{month}
+  // An edit only creates an unsaved draft. Nothing is raised until Save.
+  const onEdit = useCallback(([col,row], v)=>{
+    const r = rows[row], k = cols[col].k;
+    if(r?.t!=='d' || !(k in MASTER_FIELDS)) return;
+    const nv = NUM_FIELDS.has(k) ? Number(v.data) : String(v.data ?? '').trim();
+    if(NUM_FIELDS.has(k) && (v.data==null || isNaN(nv))) return;
+    const code = r.it.code, key = code + '|' + k;
+    if(String(nv)===String(baseValue(code, k))) DRAFT.delete(key);   // typed back to what's already there → no draft
+    else DRAFT.set(key, {code, field:k, new:nv});
     bump();
-  }, [plan, bump]);
+  }, [rows, cols, bump]);
+
+  const save = useCallback(()=>{
+    if(!DRAFT.size) return;
+    ask({title:'Save changes?', ok:'Save', onOk:()=>{ saveDraft(role); bump(); }});
+  }, [role, bump, ask]);
+  useEffect(()=>{                                            // Ctrl+S saves
+    const onKey = e => { if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); save(); } };
+    window.addEventListener('keydown', onKey); return ()=>window.removeEventListener('keydown', onKey);
+  }, [save]);
+
   const toggle = sec => setCollapsed(s=>{ const n=new Set(s); n.has(sec)?n.delete(sec):n.add(sec); return n; });
 
   return h(React.Fragment, null,
-    h('div', {className:'strip'},
-      h('div', null, h('h2', null, 'Monthly Requirement – '+monthName(month)), h('div',{className:'sub'},'Plan × BOM qty → gross, less stock & open PO → net, rounded up to MOQ')),
-      h('div', {className:'kpi'}, h('div',{className:'k'},'Pumps planned'), h('div',{className:'v'}, fmt(Object.values(plan).reduce((a,b)=>a+b,0)))),
-      h('div', {className:'kpi'}, h('div',{className:'k'},'Items required'), h('div',{className:'v'}, items.length)),
-      h('div', {className:'kpi'}, h('div',{className:'k'},'Items to buy'), h('div',{className:'v '+(short.length?'bad':'good')}, short.length)),
-      h('div', {className:'kpi'}, h('div',{className:'k'},'Purchase value'), h('div',{className:'v'}, '₹'+fmt(short.reduce((a,b)=>a+b.value,0)/1e5,2)+' L')),
-      h('div', {className:'kpi'}, h('div',{className:'k'},'Late to order'), h('div',{className:'v '+(late.length?'bad':'good')}, late.length))
-    ),
-    h('div', {className:'planbox'}, h(Grid, {cols:PLAN_COLS, rows:planRows, getCell:planGet, onEdit:planEdit, height: 34 + 26*PRODUCTS.length + 2, onStats})),
-    h('div', {className:'tools'},
-      h('button', {onClick:()=>setCollapsed(new Set(SECORD))}, '⊟ Collapse all'),
-      h('button', {onClick:()=>setCollapsed(new Set())}, '⊞ Expand all'),
-      h('span', {className:'hint'}, 'Edit the orange Plan Qty cells (or paste a column from Excel) – the requirement recalculates instantly')
-    ),
-    h('div', {className:'gridbox'}, h(Grid, {cols, rows, getCell, onToggle:toggle, sort, setSort, freeze:1, onStats}))
+    h('div', {className:'strip head'},
+      h('div', {className:'info'},
+        h('div', {className:'l1'}, h('h2', null, 'Material Master'), seg)),
+      h('div', {className:'acts'},
+        h(SearchBox, {value:q, onChange:setQ}),
+        h('span', {className:'vsep'}),
+        h('button', {className:'ib', title:'Collapse all', onClick:()=>setCollapsed(new Set(SECORD))}, '⊟'),
+        h('button', {className:'ib', title:'Expand all', onClick:()=>setCollapsed(new Set())}, '⊞'),
+        h('button', {className:'ib', title:'Clear sort', onClick:()=>setSort(null)}, '⇅'),
+        can('edit') ? h('span', {className:'vsep'}) : null,
+        can('edit') && DRAFT.size ? h('span', {className:'unsaved'}, `${DRAFT.size} unsaved`) : null,
+        can('edit') ? h('button', {className:'btn', disabled:!DRAFT.size, onClick:()=>{ discardDraft(); bump(); }}, 'Discard') : null,
+        can('edit') ? h('button', {className:'btn primary', disabled:!DRAFT.size, title:'Save (Ctrl+S) – raises a change request', onClick:save}, 'Save') : null)),
+    h('div', {className:'gridbox'}, h(Grid, {cols, rows, getCell, onEdit, onToggle:toggle, sort, setSort, onStats,
+      onCell:([col,row])=>{ if(cols[col].k==='ver' && rows[row]?.t==='d') openHistory(rows[row].it.code); }}))
   );
+}
+
+/* ---------- Change Requests tab: one entry per request + item version history ---------- */
+const when = d => d.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+// Each change request is a card: header (who / when / status / actions) + a simple table of its changes.
+function RequestList({role, bump, ask, q, from, to}){
+  const hit = req => inRange(isoDay(req.at), from, to) && matchQ(q, '#'+req.id, req.by, req.status, ...req.lines.flatMap(l=>[l.code, MAT[l.code]?.item, MASTER_FIELDS[l.field], l.old, l.new]));
+  const list = CHANGES.filter(hit).sort((a,b)=>(a.status==='Pending'?0:1)-(b.status==='Pending'?0:1) || b.at-a.at);
+  const canA = can('approve');
+  const decide = (req, ok) => { if(ok) applyRequest(req, role); req.status = ok ? 'Approved' : 'Rejected'; req.decidedBy = role; req.decidedAt = new Date(); bump(); };
+
+  // Version effect per change line: only Item / Description / UOM / Make lines move the version.
+  const verOf = (req, l) => {
+    if(!VERSIONED_FIELDS.has(l.field)) return h('span', {className:'muted'}, '—');
+    if(req.status==='Approved') return h('b', null, 'v' + req.versions[l.code].to);
+    if(req.status==='Rejected') return h('span', {className:'muted'}, 'v' + MAT[l.code].ver);
+    return h('b', {style:{color:'#9c5700'}}, `v${MAT[l.code].ver} → v${MAT[l.code].ver + 1}`);
+  };
+
+  const exCols = [{k:'id',l:'Request'},{k:'status',l:'Status'},{k:'by',l:'Requested by'},{k:'at',l:'Requested on'},{k:'code',l:'Item Code'},{k:'item',l:'Item'},{k:'field',l:'Field'},{k:'old',l:'Current'},{k:'new',l:'Proposed'}];
+  const exRows = list.flatMap(req=>req.lines.map(l=>({t:'d', it:{id:'#'+req.id, status:req.status, by:req.by, at:when(req.at), code:l.code, item:MAT[l.code]?.item, field:MASTER_FIELDS[l.field], old:l.old, new:l.new}})));
+  useExportSource({cols:exCols, rows:exRows, getCell:([c,r])=>{ const v = exRows[r]?.it[exCols[c].k]; return typeof v==='number' ? num(v) : txt(v); }, sel:null});
+
+  const sumText = (req, codes, nVer) => `${req.lines.length} change${req.lines.length!==1?'s':''} on ${codes.length} item${codes.length!==1?'s':''}` + (nVer ? ` and creates ${nVer} new version${nVer!==1?'s':''}` : '');
+  if(!list.length) return h('div', {className:'empty'}, (hasQ(q) || from || to) ? 'No matching change requests.' : 'No change requests yet. Edit a cell in Material Master → Item Master to start one.');
+  return h('div', {className:'cards'}, list.map(req=>{
+    const codes = [...new Set(req.lines.map(l=>l.code))];
+    const nVer = codes.filter(c=>bumpsVersion(req.lines.filter(l=>l.code===c))).length;
+    return h('div', {key:req.id, className:'card '+req.status},
+      h('div', {className:'card-h', style:{alignItems:'center'}},
+        h('div', {className:'card-t'}, h('b', null, 'Request #' + req.id), h('span', {className:'pill '+req.status}, req.status)),
+        req.status==='Pending' ? h('div', {className:'card-a'},
+          h('button', {className:'btn no', disabled:!canA, onClick:()=>ask({title:`Reject request #${req.id}?`,
+            text:`None of its ${req.lines.length} change${req.lines.length!==1?'s':''} will be applied. This can't be undone.`, ok:'Reject', danger:true, onOk:()=>decide(req,false)})}, 'Reject'),
+          h('button', {className:'btn ok', disabled:!canA, title:canA?'':'Only Admin can approve', onClick:()=>ask({title:`Approve request #${req.id}?`,
+            text:`This applies ${sumText(req, codes, nVer)} in the material master.`, ok:'Approve', onOk:()=>decide(req,true)})}, 'Approve')) : null),
+      h('table', {className:'ctab'},
+        h('colgroup', null, ['13%','18%','12%','24%','24%','9%'].map((w,i)=>h('col', {key:i, style:{width:w}}))),
+        h('thead', null, h('tr', null, ['Item Code','Item','Field','Current','Proposed','Version'].map(t=>h('th', {key:t}, t)))),
+        h('tbody', null, req.lines.map(l=>h('tr', {key:l.code+'|'+l.field},
+          h('td', {className:'mono'}, l.code),
+          h('td', null, MAT[l.code].item),
+          h('td', null, MASTER_FIELDS[l.field]),
+          h('td', {className:'old'}, String(l.old)),
+          h('td', {className:'new'}, String(l.new)),
+          h('td', null, verOf(req, l)))))));
+  }));
+}
+
+// Styled search box with its own suggestion list (replaces the browser's native datalist dropdown).
+function ItemPicker({value, onPick}){
+  const [q, setQ] = useState(value || '');
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
+  const [typed, setTyped] = useState(false);               // show the full list until the user types
+  useEffect(()=>{ setQ(value || ''); }, [value]);
+  const ql = typed ? q.trim().toLowerCase() : '';
+  const opts = Object.values(MAT).filter(x=>!ql || (x.code+' '+x.item+' '+x.spec).toLowerCase().includes(ql)).slice(0, 50);
+  const pick = x => { onPick(x.code); setQ(x.code); setOpen(false); };
+  const key = e => {
+    if(e.key==='ArrowDown'){ e.preventDefault(); setOpen(true); setHi(i=>Math.min(i+1, opts.length-1)); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); setHi(i=>Math.max(i-1, 0)); }
+    else if(e.key==='Enter' && opts[hi]) pick(opts[hi]);
+    else if(e.key==='Escape') setOpen(false);
+  };
+  return h('div', {className:'picker'},
+    h('span', {className:'pick-ico'}, '⌕'),
+    h('input', {value:q, placeholder:'Search item code or name…', onKeyDown:key,
+      onFocus:e=>{ setOpen(true); setTyped(false); setHi(0); e.target.select(); }, onBlur:()=>setOpen(false),
+      onChange:e=>{ setQ(e.target.value); setTyped(true); setOpen(true); setHi(0); }}),
+    open ? h('div', {className:'pick-list'}, opts.length ? opts.map((x,i)=>h('div', {key:x.code, className:'pick-o'+(i===hi?' hi':''),
+        onMouseDown:e=>{ e.preventDefault(); pick(x); }, onMouseEnter:()=>setHi(i)},
+        h('span', {className:'mono'}, x.code), h('span', {className:'pick-n'}, x.item, x.spec ? h('span', {className:'muted'}, ' · '+x.spec) : null),
+        h('span', {className:'pick-v'}, 'v'+x.ver)))
+      : h('div', {className:'pick-none'}, 'No matching item')) : null);
+}
+
+function VersionHistory({code, setCode}){
+  const vers = code && MAT[code] ? ITEM_VERSIONS.filter(v=>v.code===code).sort((a,b)=>b.ver-a.ver) : [];
+  const fields = [...VERSIONED_FIELDS];
+  return h(React.Fragment, null,
+    h('div', {className:'vh-bar'},
+      h(ItemPicker, {value:code, onPick:setCode}),
+      code && MAT[code] ? h('span', {className:'muted'}, `${MAT[code].item} · current v${MAT[code].ver}`) : null),
+    !vers.length ? null
+    : h('table', {className:'crt'},
+        h('thead', null, h('tr', null, ['Version','Approved by','On','Request', ...fields.map(k=>MASTER_FIELDS[k])].map(t=>h('th',{key:t},t)))),
+        h('tbody', null, vers.map((v,i)=>{ const prev = vers[i+1];
+          return h('tr', {key:v.ver},
+            h('td', null, h('b', null, 'v'+v.ver), i===0 ? h('span', {className:'pill Approved', style:{marginLeft:6}}, 'current') : null),
+            h('td', null, v.approvedBy), h('td', null, when(v.approvedAt)), h('td', null, v.reqId ? '#'+v.reqId : '–'),
+            fields.map(k=>h('td', {key:k, className: prev && String(prev.data[k])!==String(v.data[k]) ? 'new' : ''}, String(v.data[k] ?? ''))));
+        }))));
+}
+
+function ChangeRequestsSheet({role, bump, view, setView, hist, setHist, ask}){
+  const [q, setQ] = useState(['','']);
+  const [from, setFrom] = useState(''), [to, setTo] = useState('');   // empty = all dates
+  const pend = pendingReqs(), canA = can('approve');
+  return h(React.Fragment, null,
+    h('div', {className:'strip head'},
+      h('div', {className:'info'},
+        h('div', {className:'l1'}, h('h2', null, 'Change Requests'),
+          h('div', {className:'seg'}, [['requests','Requests'], ['history','Version history']].map(([k,l])=>
+            h('button', {key:k, className:view===k?'on':'', onClick:()=>setView(k)}, l)))),
+        ),
+      h('div', {className:'acts'},
+        view==='requests' ? h(DateRange, {from, to, setFrom, setTo}) : null,
+        view==='requests' ? h('span', {className:'vsep'}) : null,
+        view==='requests' ? h(SearchBox, {value:q, onChange:setQ}) : null,
+        view==='requests' ? h('span', {className:'vsep'}) : null,
+        view==='requests' && canA && pend.length ? h('button', {onClick:()=>ask({title:`Approve all ${pend.length} pending request${pend.length!==1?'s':''}?`,
+          text:`This applies ${pend.reduce((a,r)=>a+r.lines.length,0)} changes in the material master at once.`, ok:'Approve all',
+          onOk:()=>{ pend.forEach(r=>{ applyRequest(r, role); r.status='Approved'; r.decidedBy=role; r.decidedAt=new Date(); }); bump(); }})}, 'Approve all') : null,
+        view==='requests' && !canA ? h('span', {className:'muted'}, 'Only Admin can approve') : null)),
+    h('div', {className:'crwrap'}, view==='requests' ? h(RequestList, {role, bump, ask, q, from, to}) : h(VersionHistory, {code:hist, setCode:setHist})));
+}
+
+/* ---------- Monthly price list: duplicates allowed, lookup picks the latest ---------- */
+const PRICE_COLS = [
+  {k:'code', l:'Item Code', w:130}, {k:'item', l:'Item', w:180}, {k:'uom', l:'UOM', w:60}, {k:'month', l:'Price Month', w:100},
+  {k:'rate', l:'Rate ₹', w:100}, {k:'sup', l:'Supplier', w:220}, {k:'date', l:'Entered On', w:110}, {k:'by', l:'By', w:90},
+  {k:'note', l:'Note', w:180}, {k:'used', l:'Lookup', w:100},
+];
+// Price period filter: shows price entries whose month overlaps the From–To dates (defaults to the selected month).
+function PriceList({onStats, seg}){
+  const month = CUR_MONTH;
+  const [q, setQ] = useState(['','']);
+  const [sort, setSort] = useState(null);
+  const [from, setFrom] = useState(monthStart(month));
+  const [to, setTo] = useState(monthEnd(month));
+  const latest = {};                                          // winning entry per item+month
+  PRICES.forEach(e=>{ const k=e.code+'|'+e.month, b=latest[k]; if(!b || e.date>b.date || (e.date===b.date && e.id>b.id)) latest[k]=e; });
+  let entries = PRICES.filter(e=>(!to || monthStart(e.month)<=to) && (!from || monthEnd(e.month)>=from) && matchQ(q, e.code, MAT[e.code]?.item, e.sup, e.note, e.by))
+    .map(e=>({...e, item:MAT[e.code]?.item ?? '?', uom:MAT[e.code]?.uom ?? '', latest:latest[e.code+'|'+e.month]===e}));
+  entries.sort(sort ? (a,b)=>{ const x=a[sort.k], y=b[sort.k]; return (typeof x==='number'?x-y:String(x).localeCompare(String(y)))*sort.dir; }
+                    : (a,b)=>a.code.localeCompare(b.code) || a.month.localeCompare(b.month) || a.date.localeCompare(b.date) || a.id-b.id);
+  const rows = entries.map(e=>({t:'d', it:e}));
+
+  const getCell = useCallback(([col,row])=>{
+    const e = rows[row]?.it, k = PRICE_COLS[col].k; if(!e) return txt('');
+    if(k==='rate')  return num(e.rate, 2);
+    if(k==='month') return txt(shortMonth(e.month));
+    if(k==='date')  return txt(niceDay(e.date));
+    if(k==='used')  return e.latest ? txt('Latest', {themeOverride:{textDark:'#006100'}}) : txt('Superseded', {themeOverride:CARRIED});
+    return txt(e[k]);
+  }, [rows]);
+
+  return h(React.Fragment, null,
+    h('div', {className:'strip head'},
+      h('div', {className:'info'}, h('div', {className:'l1'}, h('h2', null, 'Material Master'), seg)),
+      h('div', {className:'range'},
+        h(SearchBox, {value:q, onChange:setQ}),
+        h('span', {className:'vsep'}),
+        h(DateRange, {from, to, setFrom, setTo}))),
+    h('div', {className:'gridbox'}, h(Grid, {cols:PRICE_COLS, rows, getCell, sort, setSort, onStats}))
+  );
+}
+
+function MasterSheet(props){
+  const [view, setView] = useState(location.hash==='#prices' ? 'prices' : 'items');
+  const seg = h(Seg, {value:view, onChange:setView});
+  return view==='items' ? h(ItemMaster, {...props, seg}) : h(PriceList, {...props, seg});   // ItemMaster also gets openHistory
+}
+
+/* ---------- NRP: dated production requirement lines (feeds Material Planning) ---------- */
+const NRP_COLS = [
+  {k:'date', l:'Date', w:120}, {k:'material', l:'Material', w:120}, {k:'desc', l:'Mat Description', w:290},
+  {k:'vendorCode', l:'Vendor', w:90}, {k:'vendor', l:'Vendor Name', w:190}, {k:'qty', l:'Qty', w:100},
+];
+// accepts 2026-12-03, 03-12-2026, 03/12/2026, 3.12.2026
+function parseDay(t){
+  t = String(t||'').trim(); let m;
+  if((m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return isoDay(new Date(+m[1], m[2]-1, +m[3]));
+  if((m = t.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/))) return isoDay(new Date(+m[3], m[2]-1, +m[1]));
+  return null;
+}
+function NrpSheet({range, bump, onStats, ask}){
+  const [q, setQ] = useState(['','']);
+  const [sort, setSort] = useState(null);
+  const lines = NRP.filter(r=>inRange(r.date, range.from, range.to)).map(r=>{ const p = productByMaterial(r.material);
+    return {...r, _r:r, desc:p?.name ?? '', vendorCode:p?.vendorCode ?? '', vendor:p?.vendor ?? '', model:p?.code ?? '', bad:!p}; })
+    .filter(r=>matchQ(q, niceDay(r.date), r.date, r.material, r.desc, r.vendorCode, r.vendor, r.model));
+  lines.sort(sort ? (a,b)=>{ const x=a[sort.k], y=b[sort.k]; return (typeof x==='number'?x-y:String(x).localeCompare(String(y)))*sort.dir; }
+                  : (a,b)=>a.date.localeCompare(b.date) || a.material.localeCompare(b.material) || a.id-b.id);
+  const total = lines.reduce((a,r)=>a+(+r.qty||0),0);
+  const rows = [...lines.map(r=>({t:'d', it:r})), {t:'t'}];
+
+  const getCell = useCallback(([col,row])=>{
+    const r = rows[row], k = NRP_COLS[col].k; if(!r) return txt('');
+    if(r.t==='t') return col===0 ? txt('Total') : k==='qty' ? num(total) : txt('');
+    const it = r.it, ed = {allowOverlay:true, readonly:false};
+    if(k==='date')     return {kind:GridCellKind.Text, data:niceDay(it.date), displayData:niceDay(it.date), ...ed};
+    if(k==='material') return {kind:GridCellKind.Text, data:it.material, displayData:it.material, ...ed, ...(it.bad ? {themeOverride:RED} : {})};
+    if(k==='qty')      return {kind:GridCellKind.Number, data:it.qty, displayData:fmt(it.qty), contentAlign:'right', ...ed};
+    return txt(it[k]);                                       // description / vendor come from Models
+  }, [rows, total]);
+
+  const onEdit = useCallback(([col,row], v)=>{
+    const it = rows[row]?.it, k = NRP_COLS[col].k; if(!it) return;
+    const r = it._r;                                         // TODO: PUT /api/nrp/{id}
+    if(k==='qty' && v.kind===GridCellKind.Number && v.data!=null) r.qty = Math.max(0, Math.round(v.data));
+    if(k==='date'){ const d = parseDay(v.data); if(d) r.date = d; }
+    if(k==='material'){ const t = String(v.data||'').trim().toUpperCase();
+      r.material = PRODUCTS.find(p=>p.code===t)?.material ?? t; }   // typing a model code also works
+    bump();
+  }, [rows, bump]);
+
+  const onDelete = useCallback(sel=>{                        // Delete key on selected rows → confirm, then remove lines
+    const idx = sel.rows.toArray().filter(i=>rows[i]?.t==='d');
+    if(!idx.length) return true;                             // a cell range: let the grid clear cells normally
+    ask({title:`Delete ${idx.length} NRP line${idx.length!==1?'s':''}?`, ok:'Delete', danger:true, onOk:()=>{
+      idx.forEach(i=>{ const r = rows[i].it._r; NRP.splice(NRP.indexOf(r), 1); }); bump(); }});
+    return false;
+  }, [rows, ask, bump]);
+
+  return h(React.Fragment, null,
+    h('div', {className:'strip head'},
+      h('div', {className:'info'}, h('div', {className:'l1'}, h('h2', null, 'NRP'))),
+      h('div', {className:'acts'},
+        h(DateRange, range),
+        h('span', {className:'vsep'}),
+        h(SearchBox, {value:q, onChange:setQ}),
+        h('span', {className:'vsep'}),
+        h('button', {className:'ib', title:'Clear sort', onClick:()=>setSort(null)}, '⇅'))),
+    h('div', {className:'gridbox'}, h(Grid, {cols:NRP_COLS, rows, getCell, onEdit, onDelete, sort, setSort, onStats}))
+  );
+}
+
+/* ---------- Models: one row per product model. The BOM tab reads model, vendor, motor/pump/panel and category from here. ---------- */
+const MODEL_COLS = [
+  {k:'material',   l:'Material', w:110},
+  {k:'name',       l:'Material Description', w:270},
+  {k:'code',       l:'Model', w:150},
+  {k:'motor',      l:'Motor', w:130},
+  {k:'pump',       l:'Pump', w:130},
+  {k:'panel',      l:'Panel', w:120},
+  {k:'vendorCode', l:'Vendor', w:90},
+  {k:'vendor',     l:'Vendor Name', w:170},
+  {k:'cat',        l:'Category', w:170},
+];
+const MODEL_KEYS = new Set(['material','code']);           // identifiers – not editable here (BOMs and plans point at them)
+function ModelsSheet({bump, onStats, openBom}){
+  const [sort, setSort] = useState(null);
+  const [q, setQ] = useState(['','']);
+  let list = PRODUCTS.filter(p=>matchQ(q, ...MODEL_COLS.map(c=>p[c.k])));
+  if(sort) list.sort((a,b)=>String(a[sort.k]??'').localeCompare(String(b[sort.k]??''))*sort.dir);
+  const rows = list.map(p=>({t:'d', it:p}));
+
+  const getCell = useCallback(([col,row])=>{
+    const p = rows[row]?.it, k = MODEL_COLS[col].k; if(!p) return txt('');
+    const v = String(p[k] ?? '');
+    if(k==='code') return txt(v, {themeOverride:{textDark:'#0563c1'}});          // click → open its BOM
+    if(MODEL_KEYS.has(k)) return txt(v);
+    return {kind:GridCellKind.Text, data:v, displayData:v, allowOverlay:true, readonly:false};
+  }, [rows]);
+
+  const onEdit = useCallback(([col,row], v)=>{
+    const p = rows[row]?.it, k = MODEL_COLS[col].k;
+    if(!p || MODEL_KEYS.has(k) || v.kind!==GridCellKind.Text) return;
+    p[k] = String(v.data ?? '').trim();                       // TODO: PUT /api/models/{code}
+    bump();
+  }, [rows, bump]);
+
+  return h(React.Fragment, null,
+    h('div', {className:'strip head'},
+      h('div', {className:'info'}, h('div', {className:'l1'}, h('h2', null, 'Models'))),
+      h('div', {className:'acts'},
+        h(SearchBox, {value:q, onChange:setQ}),
+        h('span', {className:'vsep'}),
+        h('button', {className:'ib', title:'Clear sort', onClick:()=>setSort(null)}, '⇅'))),
+    h('div', {className:'gridbox'}, h(Grid, {cols:MODEL_COLS, rows, getCell, onEdit, sort, setSort, onStats, freeze:3,
+      onCell:([col,row])=>{ if(MODEL_COLS[col].k==='code' && rows[row]) openBom(rows[row].it.code); }}))
+  );
+}
+
+/* Sidebar search: type to find a product; picking it adds it to the sidebar and opens its BOM. */
+function ProductSearch({opened, onPick}){
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
+  const [hi, setHi] = useState(0);
+  const ql = q.trim().toLowerCase();
+  const opts = PRODUCTS.filter(p=>!ql || [p.code,p.material,p.vendorCode,p.cat,p.vendor,p.motor,p.pump,p.panel,p.name,p.fam,p.hp+' hp',p.ph].join(' ').toLowerCase().includes(ql)
+                                  || p.bom.some(([c])=>(c+' '+MAT[c].desc).toLowerCase().includes(ql)));
+  const pick = p => { onPick(p.code); setQ(''); setOpen(false); setHi(0); };
+  const key = e => {
+    if(e.key==='ArrowDown'){ e.preventDefault(); setOpen(true); setHi(i=>Math.min(i+1, opts.length-1)); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); setHi(i=>Math.max(i-1, 0)); }
+    else if(e.key==='Enter' && opts[hi]) pick(opts[hi]);
+    else if(e.key==='Escape'){ setOpen(false); e.target.blur(); }
+  };
+  return h('div', {className:'psearch'},
+    h('span', {className:'pick-ico'}, '⌕'),
+    h('input', {value:q, placeholder:'Search product…', onKeyDown:key, onFocus:()=>setOpen(true), onBlur:()=>setOpen(false),
+                onChange:e=>{ setQ(e.target.value); setOpen(true); setHi(0); }}),
+    open ? h('div', {className:'pick-list ps-list'}, opts.length ? opts.map((p,i)=>h('div', {key:p.code, className:'ps-o'+(i===hi?' hi':''),
+        onMouseDown:e=>{ e.preventDefault(); pick(p); }, onMouseEnter:()=>setHi(i)},
+        h('div', {className:'pl1'}, h('b', null, p.code), opened.includes(p.code) ? h('span', {className:'ps-tag'}, 'open') : null,
+          p.vendor ? h('span', {className:'pv'}, p.vendor) : null),
+        h('div', {className:'muted'}, p.cat || p.fam)))
+      : h('div', {className:'pick-none'}, 'No matching product')) : null);
+}
+
+/* Profile chip at the end of the top bar; the menu lists users (prototype switcher). */
+function ProfileMenu({me, onSwitch}){
+  const [open, setOpen] = useState(false);
+  useEffect(()=>{ if(!open) return; const close = ()=>setOpen(false); window.addEventListener('click', close); return ()=>window.removeEventListener('click', close); }, [open]);
+  return h('div', {className:'prof', onClick:e=>{ e.stopPropagation(); setOpen(o=>!o); }},
+    h('span', {className:'av'}, initials(me.name)),
+    h('span', {className:'pn'}, h('b', null, me.name), h('small', null, me.role)),
+    h('span', {className:'caret'}, '▾'),
+    open && h('div', {className:'pmenu', onClick:e=>e.stopPropagation()},
+      h('div', {className:'pm-h'}, 'Switch user (prototype)'),
+      USERS.map(u=>h('div', {key:u.id, className:'pm-o'+(u.id===me.id?' on':''), onClick:()=>{ setOpen(false); if(u.id!==me.id) onSwitch(u.id); }},
+        h('span', {className:'av sm'}, initials(u.name)),
+        h('span', {className:'pm-n'}, u.name, h('small', null, u.dept)),
+        h('span', {className:'rtag '+u.role}, u.role)))));
 }
 
 /* ---------- App shell ---------- */
 function App(){
-  const [tab, setTab] = useState(location.hash==='#mrp' ? 'mrp' : 'bom');
-  const [code, setCode] = useState(PRODUCTS[0].code);
-  const [month, setMonth] = useState(Object.keys(PLANS)[0]);
-  const [q, setQ] = useState('');
+  const [tab, setTab] = useState(location.hash==='#mrp' ? 'mrp' : location.hash==='#nrp' ? 'nrp' : location.hash==='#changes' ? 'cr' : location.hash==='#models' ? 'models' : ['#master','#prices'].includes(location.hash) ? 'master' : 'bom');
+  const [crView, setCrView] = useState('requests');
+  const [hist, setHist] = useState('');
+  const [leave, setLeave] = useState(null);                   // pending navigation while drafts are unsaved
+  const [confirmBox, setConfirmBox] = useState(null);         // {title, text, ok, danger, onOk}
+  const [dl, setDl] = useState(false);                         // download dialog
+  useEffect(()=>{                                              // Ctrl+)  (Ctrl+Shift+0) → download dialog
+    const k = e => { if(e.ctrlKey && (e.key===')' || (e.shiftKey && e.code==='Digit0'))){ e.preventDefault(); setDl(true); } };
+    window.addEventListener('keydown', k); return ()=>window.removeEventListener('keydown', k);
+  }, []);
+  const ask = useCallback(o=>setConfirmBox(o), []);
+  const guard = fn => { if(DRAFT.size) setLeave(()=>fn); else fn(); };
+  const goTab = t => { if(t===tab) return; guard(()=>setTab(t)); };
+  const openHistory = c => guard(()=>{ setHist(c); setCrView('history'); setTab('cr'); });
+  const [opened, setOpened] = useState([]);                  // products added to the sidebar (starts empty)
+  const [code, setCode] = useState(null);                     // product whose BOM is shown
+  const firstPlanMonth = NRP.map(r=>r.date.slice(0,7)).filter(m=>m>=CUR_MONTH).sort()[0] || CUR_MONTH;
+  const [month, setMonth] = useState(firstPlanMonth);                // BOM tab: month for rates
+  const [pFrom, setPFrom] = useState(monthStart(firstPlanMonth));    // NRP + Material Planning share this range
+  const [pTo, setPTo] = useState(monthEnd(firstPlanMonth));
+  const range = {from:pFrom, to:pTo, setFrom:setPFrom, setTo:setPTo};
+  const [uid, setUid] = useState(USERS[0].id);               // prototype: comes from login in the real app
+  const me = USERS.find(u=>u.id===uid) || USERS[0];
+  ME = me;
+  const role = me.name;                                       // the name is recorded as requester / approver
+  const months = [...new Set([...NRP.map(r=>r.date.slice(0,7)), ...PRICES.map(e=>e.month)])].sort();
+  const nPend = CHANGES.filter(c=>c.status==='Pending').length;   // pending requests
   const [ver, setVer] = useState(0);
   const [stats, setStats] = useState(null);
   const bump = useCallback(()=>setVer(v=>v+1), []);
-  const ql = q.trim().toLowerCase();
-  const list = PRODUCTS.filter(p=>!ql || [p.code,p.cat,p.vendor,p.motor,p.pump,p.panel,p.name,p.fam,p.hp+' hp',p.ph].join(' ').toLowerCase().includes(ql)
-                                     || p.bom.some(([c])=>(c+' '+MAT[c].desc).toLowerCase().includes(ql)));
   const product = PRODUCTS.find(p=>p.code===code);
+  const openProduct = c => { setOpened(o=>o.includes(c) ? o : [...o, c]); setCode(c); };
+  const closeProduct = c => {
+    const i = opened.indexOf(c), rest = opened.filter(x=>x!==c);
+    setOpened(rest);
+    if(c===code) setCode(rest[Math.min(i, rest.length-1)] ?? null);   // show the neighbour, or nothing
+  };
 
   return h('div', {className:'app'},
     h('div', {className:'top'},
       h('div', {className:'logo'}, 'PB'), h('b', null, 'PumpBOM'),
       h('div', {className:'tabs'},
-        h('button', {className:'tab'+(tab==='bom'?' on':''), onClick:()=>setTab('bom')}, 'BOM'),
-        h('button', {className:'tab'+(tab==='mrp'?' on':''), onClick:()=>setTab('mrp')}, 'Monthly Requirement')),
+        h('button', {className:'tab'+(tab==='bom'?' on':''), onClick:()=>goTab('bom')}, 'BOM'),
+        h('button', {className:'tab'+(tab==='models'?' on':''), onClick:()=>goTab('models')}, 'Models'),
+        h('button', {className:'tab'+(tab==='master'?' on':''), onClick:()=>goTab('master')}, 'Material Master'),
+        h('button', {className:'tab'+(tab==='cr'?' on':''), onClick:()=>goTab('cr')}, 'Change Requests', nPend ? h('span', {className:'badge'}, nPend) : null),
+        h('button', {className:'tab'+(tab==='nrp'?' on':''), onClick:()=>goTab('nrp')}, 'NRP'),
+        h('button', {className:'tab'+(tab==='mrp'?' on':''), onClick:()=>goTab('mrp')}, 'Material Planning')),
       h('div', {className:'sp'}),
-      h('select', {value:month, onChange:e=>setMonth(e.target.value)}, Object.keys(PLANS).map(k=>h('option',{key:k, value:k}, monthName(k))))
+      h(ProfileMenu, {me, onSwitch:id=>guard(()=>setUid(id))})
     ),
     h('div', {className:'main'},
-      h('div', {className:'side'},
-        h('input', {placeholder:'Search pump, item code, part…', value:q, onChange:e=>setQ(e.target.value)}),
-        h('div', {className:'plist'}, list.map(p=>h('div', {key:p.code, className:'pi'+(p.code===code&&tab==='bom'?' on':''), onClick:()=>{setCode(p.code); setTab('bom');},
-          title:p.name},
-          h('div', {className:'pl1'}, h('b', null, p.code), p.vendor ? h('span', {className:'pv'}, p.vendor) : null),  // Product + Vendor
-          h('div', null, p.cat || p.fam))))      // Category
+      tab==='bom' && h('div', {className:'side'},                 // product list only matters on the BOM tab
+        h(ProductSearch, {opened, onPick:openProduct}),
+        h('div', {className:'plist'}, opened.map(c=>{ const p = PRODUCTS.find(x=>x.code===c);
+          return h('div', {key:c, className:'pi'+(c===code?' on':''), onClick:()=>setCode(c), title:p.name},
+            h('div', {className:'pi-txt'},
+              h('div', {className:'pl1'}, h('b', null, p.code), p.vendor ? h('span', {className:'pv'}, p.vendor) : null),  // Product + Vendor
+              h('div', null, p.cat || p.fam)),                                                                             // Category
+            h('div', {className:'pi-btns'},
+              h('button', {className:'dot cmp', title:'Compare (coming soon)', onClick:e=>e.stopPropagation()}, '⇄'),
+              h('button', {className:'dot cls', title:'Remove from list', onClick:e=>{ e.stopPropagation(); closeProduct(c); }}, '✕')));
+        }))
       ),
       h('div', {className:'work'},
-        tab==='bom' ? h(BomSheet, {key:code, ver, product, month, bump, onStats:setStats})
-                    : h(MrpSheet, {key:month, ver, month, bump, onStats:setStats}))
+        tab==='bom'    ? (product ? h(BomSheet, {key:code, ver, product, month, setMonth, months, bump, onStats:setStats}) : h('div', {className:'nobom'}, 'Search a product to open its BOM'))
+      : tab==='models' ? h(ModelsSheet, {ver, bump, onStats:setStats, openBom:c=>{ openProduct(c); setTab('bom'); }})
+      : tab==='master' ? h(MasterSheet, {ver, role, bump, onStats:setStats, openHistory, ask})
+      : tab==='nrp'    ? h(NrpSheet, {ver, range, bump, onStats:setStats, ask})
+      : tab==='cr'     ? h(ChangeRequestsSheet, {ver, role, bump, view:crView, setView:setCrView, hist, setHist, ask})
+                       : h(MrpSheet, {ver, range, onStats:setStats}))
     ),
+    confirmBox && h('div', {className:'modal-bg', onKeyDown:e=>{ if(e.key==='Escape') setConfirmBox(null); }},
+      h('div', {className:'modal'},
+        h('h3', null, confirmBox.title),
+        confirmBox.text ? h('p', null, confirmBox.text) : null,
+        h('div', {className:'modal-a'},
+          h('span', {className:'sp'}),
+          h('button', {className:'btn', autoFocus:true, onClick:()=>setConfirmBox(null)}, 'Cancel'),
+          h('button', {className:'btn ' + (confirmBox.danger ? 'danger' : 'primary'), onClick:()=>{ const f = confirmBox.onOk; setConfirmBox(null); f(); }}, confirmBox.ok)))),
+    leave && h('div', {className:'modal-bg'},
+      h('div', {className:'modal'},
+        h('h3', null, 'Unsaved changes'),
+        h('p', null, `You have ${DRAFT.size} unsaved edit${DRAFT.size!==1?'s':''} in Material Master. Save them as a change request before leaving?`),
+        h('div', {className:'modal-a'},
+          h('button', {className:'btn', onClick:()=>setLeave(null)}, 'Stay'),
+          h('span', {className:'sp'}),
+          h('button', {className:'btn no', onClick:()=>{ discardDraft(); const f=leave; setLeave(null); bump(); f(); }}, 'Discard & leave'),
+          h('button', {className:'btn primary', onClick:()=>{ saveDraft(role); const f=leave; setLeave(null); bump(); f(); }}, 'Save & leave')))),
+    dl && h(DownloadModal, {label:{bom:code ? 'BOM '+code : 'BOM', models:'Models', master:'Material Master', cr:'Change Requests', nrp:'NRP', mrp:'Material Planning'}[tab] || 'Grid', onClose:()=>setDl(false)}),
     h('div', {className:'status'},
-      h('span', null, 'Ready'), h('span', {className:'sp'}),
+      h('span', null, DRAFT.size ? `${DRAFT.size} unsaved edit${DRAFT.size!==1?'s':''}` : 'Ready'), h('span', {className:'sp'}),
       stats && stats.n ? h('span', null, 'Average: ', h('b', null, fmt(stats.sum/stats.n,2))) : null,
       stats ? h('span', null, 'Count: ', h('b', null, stats.cnt)) : null,
-      stats && stats.n ? h('span', null, 'Sum: ', h('b', null, fmt(stats.sum,2))) : null)
+      stats && stats.n ? h('span', null, 'Sum: ', h('b', null, fmt(stats.sum,2))) : null,
+      h('button', {className:'sb-dl', title:'Download this grid (Ctrl+) )', onClick:()=>setDl(true)}, '⤓ Download'))
   );
 }
 
